@@ -29,5 +29,22 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
 
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      KAFKA_BROKERS: kafka:29092
+    depends_on:
+      - kafka
+
+  worker:
+    build: .
+    environment:
+      APP_MODE: worker
+      KAFKA_BROKERS: kafka:29092
+    depends_on:
+      - kafka
 volumes:
   kafka-data:
