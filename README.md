@@ -1,98 +1,250 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Guia de implementação — Projeto Kafka com NestJS
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 1. Objetivo
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Este projeto demonstra comunicação assíncrona com Apache Kafka, utilizando NestJS, TypeScript e KafkaJS.
 
-## Description
+Cada integrante deve implementar seu próprio serviço consumidor, respeitando os contratos de mensageria compartilhados.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+O projeto permite demonstrar:
 
-## Project setup
+- Producers e consumers.
+- Tópicos e partições.
+- Consumer groups.
+- Distribuição de partições entre instâncias.
+- Rebalanceamento quando um consumer entra ou sai do grupo.
+- Offsets e lag.
 
-```bash
-$ npm install
+## 2. Tecnologias e endereços
+
+- **NestJS / TypeScript:** aplicação.
+- **Apache Kafka 4.0.1:** broker Kafka.
+- **KafkaJS:** cliente Kafka da aplicação.
+- **Docker Compose:** execução local.
+
+Endereços utilizados:
+
+- Aplicação executada diretamente no computador: `localhost:9092`.
+- Aplicações em containers na mesma rede Compose: `kafka:9092`.
+
+Execute os comandos a partir da pasta que contém `docker-compose.yml` ou `compose.yaml`.
+
+> Os comandos consideram os serviços `kafka`, `app` e `worker`, e o container Kafka chamado `kafka`. Se a configuração tiver sido alterada, confirme os nomes com `docker compose config --services` e `docker compose ps`.
+
+## 3. Arquitetura de mensageria
+
+A aplicação utiliza contratos genéricos para que os serviços de negócio não dependam diretamente do KafkaJS.
+
+Os caminhos e nomes exatos podem variar conforme a organização atual do repositório.
+
+| Componente | Responsabilidade |
+|---|---|
+| `MessageConsumer` | Contrato genérico para receber mensagens. |
+| `MessagePublisher` | Contrato genérico para publicar mensagens. |
+| `MessagingModule` | Expõe as implementações por tokens de injeção. |
+| Consumer de negócio | Executa a lógica do seu domínio. |
+
+**Regra principal:** serviços de negócio devem depender das interfaces e dos tokens de mensageria, não de classes concretas do KafkaJS.
+
+## 4. Contrato de mensagens
+
+O contrato de entrada utilizado no projeto é semelhante a:
+
+```typescript
+export interface IncomingMessage {
+  destination: string;
+  key?: string;
+  payload: string;
+}
+
+export interface MessageConsumer {
+  subscribe(
+    destination: string,
+    groupId: string,
+    handler: (
+      message: IncomingMessage,
+    ) => Promise<void>,
+  ): Promise<void>;
+}
+
+export const MESSAGE_CONSUMER =
+  Symbol('MESSAGE_CONSUMER');
 ```
 
-## Compile and run the project
+### Significado dos campos
 
-```bash
-# development
-$ npm run start
+- `destination`: tópico de origem.
+- `key`: chave opcional do evento; pode influenciar a partição em que a mensagem será gravada.
+- `payload`: conteúdo da mensagem, recebido como string.
 
-# watch mode
-$ npm run start:dev
+Exemplo de payload JSON:
 
-# production mode
-$ npm run start:prod
+```json
+{
+  "status": "CREATED",
+  "orderId": 702
+}
 ```
 
-## Run tests
+O contrato recebe o payload como string. Cada consumer deve converter e validar o conteúdo de acordo com o formato esperado.
 
-```bash
-# unit tests
-$ npm run test
+## 5. Como implementar um consumer
 
-# e2e tests
-$ npm run test:e2e
+Cada integrante deve criar um serviço NestJS responsável pelo consumo de seu domínio.
 
-# test coverage
-$ npm run test:cov
+### Passo 1 — Criar o serviço
+
+Exemplo de `PaymentsConsumerService`:
+
+```typescript
+import {
+  Inject,
+  Injectable,
+  OnModuleInit,
+} from '@nestjs/common';
+
+import {
+  MESSAGE_CONSUMER,
+  MessageConsumer,
+} from '../messaging/interfaces/message-consumer.interface';
+
+@Injectable()
+export class PaymentsConsumerService
+  implements OnModuleInit
+{
+  constructor(
+    @Inject(MESSAGE_CONSUMER)
+    private readonly consumer: MessageConsumer,
+  ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.consumer.subscribe(
+      'orders',
+      'payments-consumer-group',
+      async (message) => {
+        console.log('[PAYMENTS] Evento recebido', {
+          destination: message.destination,
+          key: message.key,
+          payload: message.payload,
+        });
+
+        // Implementar aqui a lógica do serviço.
+      },
+    );
+
+    console.log('[PAYMENTS] Consumer iniciado');
+  }
+}
 ```
 
-## Deployment
+Ajuste o caminho do import conforme a localização real do arquivo no projeto.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+O exemplo utiliza o tópico `orders` e o grupo `payments-consumer-group`. Se precisar consumir outro tópico, combine o nome com a equipe e garanta que ele exista.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Passo 2 — Registrar o serviço no módulo de workers
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+Exemplo:
+
+```typescript
+import { Module } from '@nestjs/common';
+import { MessagingModule } from '../messaging/messaging.module';
+import { PaymentsConsumerService } from './payments-consumer.service';
+
+@Module({
+  imports: [MessagingModule],
+  providers: [PaymentsConsumerService],
+})
+export class WorkerModule {}
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Adapte os caminhos dos imports à estrutura real do repositório.
 
-## Resources
+O `MessagingModule` disponibiliza o token `MESSAGE_CONSUMER`, associado ao adapter Kafka por meio de `useExisting`. O `KafkaModule` precisa exportar as classes concretas utilizadas pelo `MessagingModule`.
 
-Check out a few resources that may come in handy when working with NestJS:
+**Atenção:** não registre os mesmos consumers tanto no `app` quanto no `worker` sem intenção. Se a aplicação principal também inicializar consumers, ela participará dos grupos. Para testar o escalonamento, todos os processos que devem participar precisam usar o mesmo `groupId`, e os serviços devem ser registrados nos módulos definidos pela arquitetura do projeto.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Passo 3 — Definir o consumer group
 
-## Support
+Use um identificador estável para cada grupo.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+| Serviço | Consumer group |
+|---|---|
+| Pedidos | `orders-consumer-group` |
+| Estoque | `stock-consumer-group` |
+| Pagamentos | `payments-consumer-group` |
 
-## Stay in touch
+Não confunda o nome do tópico com o nome do grupo.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- **Mesmo tópico + grupos diferentes:** cada grupo consome os eventos de forma independente.
+- **Mesmo tópico + mesmo grupo:** as instâncias dividem o trabalho entre si, conforme as partições disponíveis.
 
-## License
+Se duas instâncias do mesmo serviço utilizam o mesmo `groupId`, elas participam do mesmo grupo. Cada partição pode ser atribuída a, no máximo, um membro desse grupo por vez.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Passo 4 — Converter o payload
+
+Exemplo de conversão de JSON:
+
+```typescript
+interface OrderEvent {
+  orderId: number;
+  status: string;
+}
+
+async (message) => {
+  const event = JSON.parse(message.payload) as OrderEvent;
+
+  console.log('Pedido recebido:', event.orderId);
+  console.log('Status:', event.status);
+
+  // Executar a lógica do serviço.
+}
+```
+
+Esse exemplo pressupõe que o payload seja JSON válido e compatível com `OrderEvent`. Em código real, valide os dados antes de utilizá-los.
+
+Não coloque lógica de negócio no adapter Kafka. O adapter cuida do transporte; o consumer cuida do domínio.
+
+### Processamento e offsets
+
+A implementação descrita utiliza o comportamento padrão de auto-commit do KafkaJS. Isso simplifica a demonstração, mas não garante processamento exatamente uma vez.
+
+Em sistemas reais, considere falhas durante o processamento, duplicidade de eventos, idempotência e a relação entre o processamento de negócio e o avanço dos offsets.
+
+Para este projeto didático, não altere a estratégia de commit sem combinar previamente com o responsável pela implementação.
+
+## 6. Resumo rápido dos comandos
+
+```powershell
+# Subir tudo
+docker compose up -d --build
+
+# Listar containers
+docker compose ps
+
+# Ver logs dos workers
+docker compose logs --tail 100 -f worker
+
+# Escalar para duas instâncias
+docker compose up -d --build --scale worker=2 worker
+
+# Parar uma instância
+docker stop kafka-nestjs-worker-2
+
+# Iniciar uma instância
+docker start kafka-nestjs-worker-2
+
+# Listar tópicos
+docker exec -it kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+
+# Descrever o tópico orders
+docker exec -it kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic orders
+
+# Listar consumer groups
+docker exec -it kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --list
+
+# Consultar offsets e lag do grupo de pedidos
+docker exec -it kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group orders-consumer-group
+
+# Parar o ambiente
+docker compose down
+```

@@ -1,0 +1,3 @@
+export const MESSAGE_PUBLISHER = Symbol('MESSAGE_PUBLISHER');
+
+export const DESTINATION_MANAGER = Symbol('DESTINATION_MANAGER');

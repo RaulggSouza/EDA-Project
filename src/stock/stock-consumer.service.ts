@@ -1,47 +1,29 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Consumer } from 'kafkajs';
+
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  MESSAGE_CONSUMER,
+  type MessageConsumer,
+} from '../messaging/interfaces/message-consumer.interface';
 import { KafkaConsumerGroup } from '../kafka/types';
-import { KafkaService } from '../kafka/kafka.service';
 
 @Injectable()
-export class StockConsumerService implements OnModuleInit, OnModuleDestroy {
-  private readonly consumer: Consumer;
+export class StockConsumerService implements OnModuleInit {
+  constructor(
+    @Inject(MESSAGE_CONSUMER)
+    private readonly consumer: MessageConsumer,
+  ) {}
 
-  constructor(private readonly kafkaService: KafkaService) {
-    this.consumer = this.kafkaService.client.consumer({
-      groupId: KafkaConsumerGroup.STOCK,
-    });
-  }
-
-  async onModuleInit() {
-    await this.consumer.connect();
-
-    await this.consumer.subscribe({
-      topic: 'orders',
-      fromBeginning: true,
-    });
-
-    await this.consumer.run({
-      autoCommit: false,
-      eachMessage: async ({ topic, partition, message }) => {
+  async onModuleInit(): Promise<void> {
+    await this.consumer.subscribe(
+      'orders',
+      KafkaConsumerGroup.STOCK,
+      async (message) => {
         console.log(
-          `[STOCK] Topic: ${topic} | Partition: ${partition} | ` +
-            `Order: ${message.key?.toString()} | ` +
-            `Event: ${message.value?.toString()}`,
+          `[STOCK] Topic: ${message.destination} | ` +
+            `Order: ${message.key ?? 'sem chave'} | ` +
+            `Event: ${message.payload}`,
         );
-
-        await this.consumer.commitOffsets([
-          {
-            topic,
-            partition,
-            offset: (BigInt(message.offset) + 1n).toString(),
-          },
-        ]);
       },
-    });
-  }
-
-  async onModuleDestroy() {
-    await this.consumer.disconnect();
+    );
   }
 }

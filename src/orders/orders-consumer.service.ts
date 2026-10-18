@@ -1,43 +1,31 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
-import { Consumer } from "kafkajs";
-import { KafkaService } from "../kafka/kafka.service";
-import { KafkaConsumerGroup } from "../kafka/types";
+
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  MESSAGE_CONSUMER,
+  type MessageConsumer,
+} from '../messaging/interfaces/message-consumer.interface';
+import { KafkaConsumerGroup } from '../kafka/types';
 
 @Injectable()
-export class OrdersConsumerService implements OnModuleInit, OnModuleDestroy {
-    private readonly consumer: Consumer;
+export class OrdersConsumerService implements OnModuleInit {
+  constructor(
+    @Inject(MESSAGE_CONSUMER)
+    private readonly consumer: MessageConsumer,
+  ) {}
 
-  constructor(private readonly kafkaService: KafkaService) {
-    this.consumer = this.kafkaService.client.consumer({
-      groupId: KafkaConsumerGroup.ORDERS,
-    });
-  }
+  async onModuleInit(): Promise<void> {
+    await this.consumer.subscribe(
+      'orders',
+      KafkaConsumerGroup.ORDERS,
+      async (message) => {
+        console.log({
+          topic: message.destination,
+          key: message.key,
+          value: message.payload,
+        });
+      },
+    );
 
-  async onModuleInit() {
-    await this.consumer.connect();
-
-    await this.consumer.subscribe({
-        topic: 'orders',
-        fromBeginning: true,
-    });
-
-    console.log('Kafka consumer connected');
-
-    await this.consumer.run({
-        eachMessage: async ({ topic, partition, message }) => {
-            console.log({
-                topic,
-                partition,
-                offset: message.offset,
-                key: message.key?.toString(),
-                value: message.value?.toString(),
-            });
-        },
-    });
-  }
-
-  async onModuleDestroy() {
-    await this.consumer.disconnect();
-    console.log('Kafka consumer disconnected');
+    console.log('Orders consumer started');
   }
 }
