@@ -24,7 +24,7 @@ async function bootstrap() {
 
   app.enableCors({
     origin: process.env.FRONTEND_ORIGIN ?? true,
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'DELETE'],
     allowedHeaders: ['Content-Type', 'x-webhook-token'],
   });
   app.enableShutdownHooks();

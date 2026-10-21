@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101614" />
+    <title>Kafka Lab · NestJS</title>
+    <link rel="stylesheet" href="/kafka/styles.css" />
+    <script src="/kafka/app.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="/kafka/index.html" aria-label="Kafka Lab início">
+          <span class="brand-mark">K</span>
+          <span>KAFKA<span class="brand-light">LAB</span></span>
+        </a>
+        <div class="connection"><span class="pulse" id="connection-dot"></span><span id="connection-label">Conectando ao NestJS</span></div>
+      </header>
+
+      <section class="intro">
+        <div>
+          <div class="eyebrow"><span class="eyebrow-line"></span> APRENDIZADO EM TEMPO REAL</div>
+          <h1>Veja o Kafka<br /><span>se reorganizar.</span></h1>
+          <p>Envie pedidos, controle consumers e acompanhe o rebalanceamento do grupo ao vivo.</p>
+        </div>
+        <div class="cluster-card">
+          <div class="cluster-icon">⌘</div>
+          <div><span class="mini-label">CLUSTER LOCAL</span><strong>orders <i>·</i> 3 partições</strong></div>
+          <span class="cluster-status">ATIVO</span>
+        </div>
+      </section>
+
+      <section class="control-grid">
+        <article class="panel order-panel">
+          <div class="panel-heading"><div><span class="step">01</span><h2>Criar um pedido</h2></div><span class="topic-tag">TOPIC / ORDERS</span></div>
+          <form id="order-form" class="order-form">
+            <label for="order-id">ID do pedido</label>
+            <div class="input-wrap"><span class="input-prefix">#</span><input id="order-id" name="orderId" placeholder="Ex.: ORD-1042" required maxlength="80" /></div>
+            <label for="order-message">Mensagem do evento</label>
+            <textarea id="order-message" name="message" rows="3" placeholder="Ex.: Pedido criado no checkout" maxlength="500">Pedido criado no checkout</textarea>
+            <button class="button button-primary" type="submit"><span>Enviar pedido</span><span class="button-arrow">↗</span></button>
+            <p class="form-hint" id="order-feedback">O pedido será publicado no tópico <code>orders</code>.</p>
+          </form>
+        </article>
+
+        <article class="panel consumer-panel">
+          <div class="panel-heading"><div><span class="step">02</span><h2>Adicionar consumer</h2></div><span class="live-tag"><span></span> AO VIVO</span></div>
+          <form id="consumer-form" class="consumer-form">
+            <label for="consumer-name">Nome para exibição <span class="optional">opcional</span></label>
+            <input id="consumer-name" name="name" placeholder="Ex.: Worker de pedidos" maxlength="40" />
+            <label for="consumer-group">Grupo de consumo</label>
+            <div class="select-wrap"><select id="consumer-group" name="groupId"><option value="orders-consumer-group">Pedidos · orders-consumer-group</option><option value="stock-consumer-group">Estoque · stock-consumer-group</option></select><span>⌄</span></div>
+            <button class="button button-secondary" type="submit"><span class="plus">＋</span> Criar consumer</button>
+            <p class="form-hint">Consumers do mesmo grupo dividem as partições. Grupos diferentes recebem os eventos independentemente.</p>
+          </form>
+        </article>
+      </section>
+
+      <section class="section-head">
+        <div><div class="eyebrow"><span class="eyebrow-line"></span> DISTRIBUIÇÃO</div><h2>Partições por grupo</h2></div>
+        <div class="rebalance-indicator" id="rebalance-indicator"><span class="pulse"></span><span id="rebalance-label">Grupo estável</span></div>
+      </section>
+      <section class="groups-grid" id="groups-grid" aria-live="polite">
+        <div class="empty-state">Carregando estado do cluster…</div>
+      </section>
+
+      <section class="section-head log-heading">
+        <div><div class="eyebrow"><span class="eyebrow-line"></span> TRILHA DE EVENTOS</div><h2>O que está acontecendo</h2></div>
+        <button class="clear-button" id="clear-log" type="button">Limpar histórico <span>⌫</span></button>
+      </section>
+      <section class="event-log" aria-live="polite">
+        <div class="log-columns"><span>EVENTO</span><span>DETALHES</span><span>HORÁRIO</span></div>
+        <div id="event-list" class="event-list"><div class="empty-log">Os eventos de publicação, consumo e rebalanceamento aparecerão aqui.</div></div>
+      </section>
+      <footer><span>KafkaJS <i>×</i> NestJS</span><span>DEMONSTRAÇÃO LOCAL</span></footer>
+    </main>
+  </body>
+</html>

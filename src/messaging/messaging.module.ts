@@ -28,6 +28,7 @@ import { KafkaDestinationManager } from '../kafka/kafka-destination-manager';
     MESSAGE_PUBLISHER,
     MESSAGE_CONSUMER,
     DESTINATION_MANAGER,
+    KafkaModule,
   ],
 })
 export class MessagingModule {}

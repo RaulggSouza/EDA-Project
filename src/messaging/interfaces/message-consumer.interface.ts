@@ -1,5 +1,7 @@
 export interface IncomingMessage {
   destination: string;
+  partition?: number;
+  offset?: string;
   key?: string;
   payload: string;
 }

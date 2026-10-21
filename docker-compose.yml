@@ -41,12 +41,5 @@ services:
     depends_on:
       - kafka
 
-  worker:
-    build: .
-    environment:
-      APP_MODE: worker
-      KAFKA_BROKERS: kafka:29092
-    depends_on:
-      - kafka
 volumes:
   kafka-data:
