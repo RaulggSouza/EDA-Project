@@ -297,3 +297,26 @@ Para rodar o frontend fora do Docker: `cd public/web-rabbitmq && npm install && 
 Cada serviço guarda o estado em memória: não escale um serviço da saga (`--scale`), senão compensações podem cair em outra réplica sem o estado.
 
 Mensagens cujo handler falha (ex.: payload inválido) são rejeitadas sem reentrega e seguem para a fila `dead-letter` via exchange `dlx`.
+
+## 8. Caso de uso MQTT, rastreio do entregador
+
+PoC independente dos outros casos: um simulador de entregador publica a posição do pedido 1042 no Mosquitto a cada 2 segundos, e o backend NestJS assina com duas conexões (rastreamento e auditoria) e mostra tudo num front em `/mqtt/`. A PoC demonstra publish/subscribe com wildcard, mensagens retidas e Last Will. Roda só com Docker, usando `MESSAGING_DRIVER=mqtt`.
+
+```bash
+# Subir broker + app + entregador
+docker compose -f docker-compose.mqtt.yml up --build
+
+# Front: http://localhost:3000/mqtt/
+
+# Ver as mensagens direto no broker
+docker compose -f docker-compose.mqtt.yml exec mosquitto mosquitto_sub -t "entregas/#" -v
+
+# Last Will: derrubar o entregador sem desconectar e religar
+docker compose -f docker-compose.mqtt.yml kill entregador
+docker compose -f docker-compose.mqtt.yml start entregador
+
+# Parar o ambiente
+docker compose -f docker-compose.mqtt.yml down
+```
+
+Detalhes em [docs/mqtt/FLUXO-DE-EXECUCAO.md](docs/mqtt/FLUXO-DE-EXECUCAO.md) e [docs/mqtt/COMANDOS.md](docs/mqtt/COMANDOS.md).
