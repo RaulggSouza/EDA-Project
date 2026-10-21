@@ -27,7 +27,7 @@ docker compose -f docker-compose.mqtt.yml logs -f app entregador
 docker compose -f docker-compose.mqtt.yml exec mosquitto mosquitto_sub -t "entregas/#" -v
 ```
 
-3. Retained. Clicar em "Conectar novo assinante". O quadro mostra o payload com `retain: true`, e o log do app, `[novo assinante] recebeu entregas/1042/localizacao com retain=true`. Quem já estava conectado recebe `retain=false`, e quem chega agora recebe a guardada na hora.
+3. Retained. Clicar em "Conectar novo assinante". A mensagem guardada sai da caixa "Guardado no broker" e cai na coluna "novo assinante" com a etiqueta `retain`. O log do app mostra `[novo assinante] recebeu entregas/1042/localizacao com retain=true`. Quem já estava conectado recebe `retain=false`, e quem chega agora recebe a guardada na hora.
 4. Last Will. Derrubar o entregador sem ele se despedir:
 
 ```bash

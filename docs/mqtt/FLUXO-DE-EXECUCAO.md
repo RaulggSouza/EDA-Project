@@ -49,7 +49,7 @@ sequenceDiagram
 2. No front, "Conectar novo assinante" faz `POST /mqtt/novo-assinante`.
 3. O service abre uma conexão nova (`novo-assinante-<timestamp>`) e assina `entregas/1042/localizacao`.
 4. O broker entrega a retida na hora, sem esperar os 2 segundos, com `packet.retain === true`.
-5. O service fecha a conexão e responde com `retain: true`. O log do app mostra `[novo assinante] recebeu entregas/1042/localizacao com retain=true`.
+5. O service fecha a conexão, emite o evento no SSE com `quem: novo-assinante` e responde com `retain: true`. O front anima a mensagem até a coluna do novo assinante. O log do app mostra `[novo assinante] recebeu entregas/1042/localizacao com retain=true`.
 
 As mensagens ao vivo chegam com `retain=false`, então os logs normais não têm o sufixo `(retain)`. Se o app reiniciar (`restart app`), as conexões novas recebem posição e status retidos ao assinar, e aí o sufixo aparece.
 
