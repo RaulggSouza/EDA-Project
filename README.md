@@ -300,7 +300,9 @@ Mensagens cujo handler falha (ex.: payload inválido) são rejeitadas sem reentr
 
 ## 8. Caso de uso MQTT, rastreio do entregador
 
-PoC independente dos outros casos: um simulador de entregador publica a posição do pedido 1042 no Mosquitto a cada 2 segundos, e o backend NestJS assina com duas conexões (rastreamento e auditoria) e mostra tudo num front em `/mqtt/`. A PoC demonstra publish/subscribe com wildcard, mensagens retidas e Last Will. Roda só com Docker, usando `MESSAGING_DRIVER=mqtt`.
+PoC independente dos outros casos. Um simulador de entregador publica a posição do pedido 1042 no Mosquitto a cada 2 segundos, e o backend NestJS assina com duas conexões (rastreamento e auditoria) e mostra tudo num front em `/mqtt/`. Demonstra publish/subscribe com wildcard, mensagens retidas e Last Will.
+
+Só precisa de Docker. O primeiro `up --build` baixa as imagens e instala as dependências, então leva alguns minutos.
 
 ```bash
 # Subir broker + app + entregador
@@ -319,4 +321,4 @@ docker compose -f docker-compose.mqtt.yml start entregador
 docker compose -f docker-compose.mqtt.yml down
 ```
 
-Detalhes em [docs/mqtt/FLUXO-DE-EXECUCAO.md](docs/mqtt/FLUXO-DE-EXECUCAO.md) e [docs/mqtt/COMANDOS.md](docs/mqtt/COMANDOS.md).
+O roteiro da demo está em [docs/mqtt/COMANDOS.md](docs/mqtt/COMANDOS.md). O caminho de uma mensagem está em [docs/mqtt/FLUXO-DE-EXECUCAO.md](docs/mqtt/FLUXO-DE-EXECUCAO.md).
