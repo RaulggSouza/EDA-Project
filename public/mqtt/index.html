@@ -52,34 +52,62 @@
       .conexao.ativa .ponto { background: var(--verde); box-shadow: 0 0 0 4px #68d7b022; }
       h1 { font-size: clamp(36px, 5vw, 56px); letter-spacing: -2px; margin: 44px 0 10px; }
       h1 em { color: var(--roxo-claro); font-style: normal; }
-      .intro { color: #9aa69e; font-size: 14px; max-width: 560px; line-height: 1.6; margin: 0 0 32px; }
-      .grade { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-      .painel { background: linear-gradient(145deg, #19211e, #151c19); border: 1px solid var(--line); border-radius: 12px; padding: 22px 24px; }
-      .painel h2 { margin: 0 0 4px; font-size: 18px; }
-      .topico { display: inline-block; font: 10px var(--mono); color: var(--roxo-claro); background: #2a1730; padding: 5px 8px; border-radius: 5px; margin-bottom: 18px; }
-      .selo { display: inline-flex; align-items: center; gap: 10px; font: 600 22px var(--mono); padding: 12px 18px; border-radius: 10px; border: 1px solid var(--line); color: var(--muted); }
-      .selo::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+      .intro { color: #9aa69e; font-size: 14px; max-width: 620px; line-height: 1.6; margin: 0 0 32px; }
+      .etapa { font: 600 11px var(--mono); color: var(--muted); letter-spacing: 1.2px; text-transform: uppercase; margin: 28px 0 10px; }
+      .fluxo { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 16px; }
+      .painel { background: linear-gradient(145deg, #19211e, #151c19); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; min-width: 0; }
+      .painel h2 { margin: 0 0 4px; font-size: 17px; }
+      .sub { color: #75847b; font-size: 12px; line-height: 1.5; margin: 0 0 14px; }
+      .topico { display: inline-block; font: 10px var(--mono); color: var(--roxo-claro); background: #2a1730; padding: 4px 7px; border-radius: 5px; margin: 0 4px 4px 0; }
+      .selo { display: inline-flex; align-items: center; gap: 9px; font: 600 18px var(--mono); padding: 9px 14px; border-radius: 9px; border: 1px solid var(--line); color: var(--muted); }
+      .selo::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
       .selo.online { color: var(--verde); border-color: #315648; background: #16271f; }
       .selo.offline { color: var(--vermelho); border-color: #5a2f2c; background: #2a1817; }
-      .dica { color: #75847b; font-size: 12px; line-height: 1.55; margin: 14px 0 0; }
-      .posicao { font: 500 20px var(--mono); margin: 0 0 4px; }
-      .horario { font: 11px var(--mono); color: var(--muted); margin: 0 0 14px; }
-      svg { width: 100%; height: 170px; background: #121a17; border: 1px solid var(--line); border-radius: 8px; }
-      ul { list-style: none; margin: 14px 0 0; padding: 0; max-height: 260px; overflow: auto; }
-      li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid #222d27; font: 11px var(--mono); color: #c3cec6; animation: aparecer 0.25s ease; }
-      li small { color: var(--muted); }
-      .retain { color: #fff; background: var(--roxo); border-radius: 4px; padding: 1px 6px; margin-left: 6px; }
-      button { background: var(--roxo); color: #fff; border: 0; border-radius: 7px; padding: 12px 16px; font: 600 13px var(--sans); cursor: pointer; }
+      .will { margin-top: 14px; font: 11px var(--mono); color: #a6b3aa; border: 1px dashed #4a2350; border-radius: 8px; padding: 9px 11px; line-height: 1.6; }
+      .will b { color: var(--vermelho); font-weight: 600; }
+      .ultimo { margin-top: 12px; font: 12px var(--mono); color: #c3cec6; }
+      .ultimo small { display: block; color: var(--muted); margin-top: 2px; }
+      .broker { border-color: #4a2350; background: linear-gradient(145deg, #1e1522, #171119); }
+      .guardada { border: 1px solid var(--line); border-radius: 9px; padding: 11px 13px; margin-top: 10px; transition: border-color 0.4s, background 0.4s; }
+      .guardada.pisca { border-color: var(--roxo-claro); background: #2a1730; transition: none; }
+      .guardada .topico { margin: 0 0 6px; }
+      .guardada .valor { font: 500 14px var(--mono); overflow-wrap: anywhere; }
+      .guardada small { display: flex; justify-content: space-between; font: 10px var(--mono); color: var(--muted); margin-top: 4px; }
+      .chip { font: 600 10px var(--mono); border-radius: 4px; padding: 1px 6px; }
+      .chip.retain { color: #fff; background: var(--roxo); }
+      .chip.vivo { color: #9aa69e; border: 1px solid var(--line); }
+      .posicao { font: 500 17px var(--mono); margin: 0 0 2px; }
+      .horario { font: 11px var(--mono); color: var(--muted); margin: 0 0 12px; }
+      svg.mapa { display: block; width: 100%; height: 190px; background: #121a17; border: 1px solid var(--line); border-radius: 8px; }
+      .ramos { display: block; width: 100%; height: 46px; }
+      .ramos path { fill: none; stroke: #33403a; stroke-width: 2; transition: stroke 0.6s; }
+      .ramos path.ativo { stroke: var(--roxo-claro); transition: none; }
+      .assinantes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      .assinante header { height: auto; border: 0; display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+      .contador { font: 11px var(--mono); color: var(--muted); }
+      .filtros { margin-bottom: 8px; }
+      ul { list-style: none; margin: 10px 0 0; padding: 0; height: 300px; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
+      li { border: 1px solid #222d27; border-left: 3px solid var(--roxo-claro); border-radius: 7px; padding: 7px 9px; font: 11px var(--mono); color: #c3cec6; animation: aparecer 0.3s ease; }
+      li.status { border-left-color: var(--verde); }
+      li.status.offline { border-left-color: var(--vermelho); }
+      li.retido { background: #241529; border-color: #4a2350; border-left-color: var(--roxo-claro); }
+      li .linha1 { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 10px; margin-bottom: 3px; }
+      li .valor { overflow-wrap: anywhere; }
+      .vazio { color: #5f6c65; font: 11px var(--mono); }
+      button { background: var(--roxo); color: #fff; border: 0; border-radius: 7px; padding: 10px 14px; font: 600 13px var(--sans); cursor: pointer; width: 100%; margin-top: 4px; }
       button:hover { filter: brightness(1.15); }
       button:disabled { opacity: 0.6; cursor: wait; }
-      pre { background: #101714; border: 1px solid #303d35; border-radius: 7px; padding: 12px; font: 12px var(--mono); color: #e5ece6; white-space: pre-wrap; margin: 14px 0 0; min-height: 44px; }
-      .faixa { background: #1c1220; border: 1px solid #4a2350; border-radius: 12px; padding: 18px 24px; }
+      .erro { color: var(--vermelho); font: 11px var(--mono); margin: 8px 0 0; min-height: 1em; }
+      .voando { position: fixed; z-index: 10; pointer-events: none; box-shadow: 0 8px 30px #71007866; }
+      .faixa { margin-top: 28px; background: #1c1220; border: 1px solid #4a2350; border-radius: 12px; padding: 18px 24px; }
       .faixa h2 { margin: 0 0 10px; font-size: 16px; }
       .faixa code { display: block; font: 12px var(--mono); color: var(--roxo-claro); margin: 6px 0; overflow-wrap: anywhere; }
-      @keyframes aparecer { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-      @media (max-width: 760px) {
+      @keyframes aparecer { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+      @media (max-width: 900px) {
         .shell { padding: 0 16px 32px; }
-        .grade { grid-template-columns: 1fr; }
+        .fluxo, .assinantes { grid-template-columns: 1fr; }
+        .ramos { display: none; }
+        ul { height: 220px; }
       }
     </style>
   </head>
@@ -92,47 +120,76 @@
 
       <h1>Rastreio do <em>entregador</em></h1>
       <p class="intro">
-        O celular do entregador 42 publica a posição do pedido 1042 no Mosquitto a cada 2 segundos.
-        O backend assina com duas conexões diferentes, rastreamento e auditoria, e as duas recebem a mesma mensagem.
+        O entregador 42 publica no Mosquitto. O broker guarda a última mensagem de cada tópico e entrega uma cópia
+        a cada assinante cujo filtro casa com o tópico. Ele não sabe quem assina, e os assinantes não sabem uns dos outros.
       </p>
 
-      <section class="grade">
+      <p class="etapa">1 · publica &nbsp;→&nbsp; 2 · broker guarda</p>
+      <section class="fluxo">
         <article class="painel">
-          <h2>Status do entregador 42</h2>
-          <span class="topico">entregadores/42/status</span>
-          <div><span class="selo" id="selo">aguardando</span></div>
-          <p class="dica">Quando o entregador cai sem se despedir, o broker publica o Last Will e o selo vira offline.</p>
+          <h2>Entregador 42</h2>
+          <p class="sub">Publica a posição a cada 2 segundos com QoS 1 e retain.</p>
+          <span class="selo" id="selo">aguardando</span>
+          <div class="will">Last Will registrado no CONNECT<br />se cair sem DISCONNECT, o broker publica <b>offline</b></div>
+          <div class="ultimo" id="ultimo-publish">nenhuma publicação ainda</div>
+        </article>
+
+        <article class="painel broker">
+          <h2>Guardado no broker</h2>
+          <p class="sub">A mensagem retida de cada tópico. É o que um assinante novo recebe na hora em que se conecta.</p>
+          <div class="guardada" id="guardada-localizacao">
+            <span class="topico">entregas/1042/localizacao</span>
+            <div class="valor">vazio</div>
+            <small><span class="chip retain">retain</span><span class="hora">-</span></small>
+          </div>
+          <div class="guardada" id="guardada-status">
+            <span class="topico">entregadores/42/status</span>
+            <div class="valor">vazio</div>
+            <small><span class="chip retain">retain</span><span class="hora">-</span></small>
+          </div>
         </article>
 
         <article class="painel">
-          <h2>Novo assinante</h2>
-          <span class="topico">entregas/1042/localizacao</span>
-          <div><button id="novo-assinante">Conectar novo assinante</button></div>
-          <pre id="resultado-assinante">Clique para abrir uma conexão nova e ver a posição guardada pelo broker.</pre>
+          <h2>Trajeto do pedido 1042</h2>
+          <p class="posicao" id="posicao">sem posição</p>
+          <p class="horario" id="horario">aguardando a primeira mensagem</p>
+          <svg class="mapa" viewBox="0 0 300 190" id="mapa"></svg>
         </article>
       </section>
 
-      <section class="grade">
-        <article class="painel">
-          <h2>Painel de rastreamento</h2>
-          <span class="topico">entregas/+/localizacao</span>
-          <p class="posicao" id="posicao">sem posição</p>
-          <p class="horario" id="horario">aguardando a primeira mensagem</p>
-          <svg viewBox="0 0 300 170" id="mapa"></svg>
-          <ul id="lista-rastreamento"></ul>
+      <p class="etapa">3 · broker entrega a cada assinante</p>
+      <svg class="ramos" viewBox="0 0 1100 46" preserveAspectRatio="none" aria-hidden="true">
+        <path id="ramo-rastreamento" d="M550,0 C550,30 183,16 183,46" />
+        <path id="ramo-auditoria" d="M550,0 L550,46" />
+        <path id="ramo-novo-assinante" d="M550,0 C550,30 917,16 917,46" />
+      </svg>
+      <section class="assinantes">
+        <article class="painel assinante">
+          <header><h2>rastreamento</h2><span class="contador" id="contador-rastreamento">0 msgs</span></header>
+          <div class="filtros"><span class="topico">entregas/+/localizacao</span><span class="topico">entregadores/+/status</span></div>
+          <p class="sub">Conectado o tempo todo. Atualiza o mapa e o status.</p>
+          <ul id="lista-rastreamento"><li class="vazio">aguardando</li></ul>
         </article>
 
-        <article class="painel">
-          <h2>Auditoria</h2>
-          <span class="topico">entregas/+/localizacao</span>
-          <p class="dica" style="margin-top: 0">Segunda conexão, com outro clientId. Recebe a mesma posição que o painel.</p>
-          <ul id="lista-auditoria"></ul>
+        <article class="painel assinante">
+          <header><h2>auditoria</h2><span class="contador" id="contador-auditoria">0 msgs</span></header>
+          <div class="filtros"><span class="topico">entregas/+/localizacao</span></div>
+          <p class="sub">Outro clientId, só posição. Recebe a mesma mensagem no mesmo instante.</p>
+          <ul id="lista-auditoria"><li class="vazio">aguardando</li></ul>
+        </article>
+
+        <article class="painel assinante">
+          <header><h2>novo assinante</h2><span class="contador" id="contador-novo-assinante">0 msgs</span></header>
+          <div class="filtros"><span class="topico">entregas/1042/localizacao</span></div>
+          <button id="novo-assinante">Conectar novo assinante</button>
+          <p class="erro" id="erro-assinante"></p>
+          <ul id="lista-novo-assinante"><li class="vazio">cada clique abre uma conexão nova, que recebe a retida e fecha</li></ul>
         </article>
       </section>
 
       <section class="faixa">
         <h2>Last Will ao vivo</h2>
-        <p class="dica" style="margin-top: 0">Derrube o entregador sem desconectar direito e observe o selo de status.</p>
+        <p class="sub" style="margin-bottom: 0">Derrube o entregador sem desconectar direito e observe o selo e a caixa do broker.</p>
         <code>docker compose -f docker-compose.mqtt.yml kill entregador</code>
         <code>docker compose -f docker-compose.mqtt.yml start entregador</code>
       </section>
@@ -140,11 +197,17 @@
 
     <script>
       const rastro = [];
+      const contadores = { rastreamento: 0, auditoria: 0, 'novo-assinante': 0 };
       const conexao = document.getElementById('conexao');
       const conexaoTexto = document.getElementById('conexao-texto');
 
       function hora(iso) {
         return new Date(iso).toLocaleTimeString('pt-BR');
+      }
+
+      function textoPosicao(payload) {
+        const { lat, lon } = JSON.parse(payload);
+        return `lat ${lat} · lon ${lon}`;
       }
 
       function mostrarStatus(status) {
@@ -153,15 +216,41 @@
         selo.className = 'selo ' + status;
       }
 
-      function adicionarNaLista(id, texto, em, retain) {
+      function guardarNoBroker(id, valor, em) {
+        const caixa = document.getElementById(id);
+        caixa.querySelector('.valor').textContent = valor;
+        caixa.querySelector('.hora').textContent = hora(em);
+        caixa.classList.add('pisca');
+        requestAnimationFrame(() => requestAnimationFrame(() => caixa.classList.remove('pisca')));
+      }
+
+      function acenderRamo(quem) {
+        const ramo = document.getElementById('ramo-' + quem);
+        ramo.classList.add('ativo');
+        requestAnimationFrame(() => requestAnimationFrame(() => ramo.classList.remove('ativo')));
+      }
+
+      function adicionarNaLista(evento) {
+        const ehStatus = evento.topico.startsWith('entregadores/');
         const item = document.createElement('li');
-        item.innerHTML = '<span></span><small></small>';
-        item.firstChild.textContent = texto;
-        if (retain) item.firstChild.insertAdjacentHTML('beforeend', '<span class="retain">retain</span>');
-        item.lastChild.textContent = hora(em);
-        const lista = document.getElementById(id);
+        if (ehStatus) item.classList.add('status', evento.payload);
+        if (evento.retain) item.classList.add('retido');
+        item.innerHTML = '<div class="linha1"><span></span><span></span></div><div class="valor"></div>';
+        const [topico, quando] = item.firstChild.children;
+        topico.textContent = evento.topico;
+        quando.textContent = hora(evento.em);
+        quando.insertAdjacentHTML('afterbegin', evento.retain ? '<span class="chip retain">retain</span> ' : '<span class="chip vivo">ao vivo</span> ');
+        item.lastChild.textContent = ehStatus ? evento.payload : textoPosicao(evento.payload);
+
+        const lista = document.getElementById('lista-' + evento.quem);
+        lista.querySelector('.vazio')?.remove();
         lista.prepend(item);
         while (lista.children.length > 15) lista.lastChild.remove();
+
+        contadores[evento.quem] += 1;
+        document.getElementById('contador-' + evento.quem).textContent = `${contadores[evento.quem]} msgs`;
+        acenderRamo(evento.quem);
+        return item;
       }
 
       function desenharRastro() {
@@ -172,13 +261,15 @@
         const lons = rastro.map((p) => p.lon);
         const minLat = Math.min(...lats), maxLat = Math.max(...lats);
         const minLon = Math.min(...lons), maxLon = Math.max(...lons);
-        const x = (lon) => 20 + ((lon - minLon) / (maxLon - minLon || 1)) * 260;
-        const y = (lat) => 150 - ((lat - minLat) / (maxLat - minLat || 1)) * 130;
+        const escala = Math.min(260 / (maxLon - minLon || 1), 150 / (maxLat - minLat || 1));
+        const x = (lon) => 150 + (lon - (minLon + maxLon) / 2) * escala;
+        const y = (lat) => 95 - (lat - (minLat + maxLat) / 2) * escala;
 
         const pontos = rastro.map((p) => `${x(p.lon)},${y(p.lat)}`).join(' ');
         const ultima = rastro[rastro.length - 1];
         mapa.innerHTML =
           `<polyline points="${pontos}" fill="none" stroke="#d58bdc" stroke-width="2" stroke-dasharray="4 3" />` +
+          rastro.slice(0, -1).map((p, i) => `<circle cx="${x(p.lon)}" cy="${y(p.lat)}" r="2" fill="#d58bdc" opacity="${0.2 + (i / rastro.length) * 0.6}" />`).join('') +
           `<circle cx="${x(ultima.lon)}" cy="${y(ultima.lat)}" r="7" fill="#710078" stroke="#fff" stroke-width="2" />`;
       }
 
@@ -186,46 +277,66 @@
         rastro.push(posicao);
         if (rastro.length > 20) rastro.shift();
         document.getElementById('posicao').textContent = `${posicao.lat}, ${posicao.lon}`;
-        document.getElementById('horario').textContent = `pedido 1042 · recebido às ${hora(posicao.em)}`;
+        document.getElementById('horario').textContent = `recebido às ${hora(posicao.em)}`;
         desenharRastro();
       }
 
-      function tratarEvento(evento) {
-        if (evento.topico.startsWith('entregadores/')) {
-          mostrarStatus(evento.payload);
-          adicionarNaLista('lista-rastreamento', `${evento.topico} → ${evento.payload}`, evento.em, evento.retain);
-          return;
-        }
+      function voarAteALista(item) {
+        const origem = document.getElementById('guardada-localizacao').getBoundingClientRect();
+        const destino = item.getBoundingClientRect();
+        const copia = item.cloneNode(true);
+        copia.classList.add('voando');
+        Object.assign(copia.style, { left: `${origem.left}px`, top: `${origem.top}px`, width: `${destino.width}px` });
+        document.body.append(copia);
+        item.style.visibility = 'hidden';
+        copia.animate(
+          [{ transform: 'none' }, { transform: `translate(${destino.left - origem.left}px, ${destino.top - origem.top}px)` }],
+          { duration: 700, easing: 'cubic-bezier(.5,0,.2,1)' },
+        ).onfinish = () => {
+          copia.remove();
+          item.style.visibility = '';
+        };
+      }
 
-        const { lat, lon } = JSON.parse(evento.payload);
-        const texto = `lat ${lat} · lon ${lon}`;
-        if (evento.quem === 'auditoria') {
-          adicionarNaLista('lista-auditoria', texto, evento.em, evento.retain);
-          return;
+      function tratarEvento(evento) {
+        const ehStatus = evento.topico.startsWith('entregadores/');
+        if (evento.quem === 'rastreamento' && ehStatus) {
+          mostrarStatus(evento.payload);
+          guardarNoBroker('guardada-status', evento.payload, evento.em);
         }
-        atualizarPosicao({ lat, lon, em: evento.em });
-        adicionarNaLista('lista-rastreamento', texto, evento.em, evento.retain);
+        if (evento.quem === 'rastreamento' && !ehStatus) {
+          const { lat, lon } = JSON.parse(evento.payload);
+          atualizarPosicao({ lat, lon, em: evento.em });
+          guardarNoBroker('guardada-localizacao', textoPosicao(evento.payload), evento.em);
+          document.getElementById('ultimo-publish').innerHTML = `${evento.topico}<small></small>`;
+          document.querySelector('#ultimo-publish small').textContent = textoPosicao(evento.payload);
+        }
+        const item = adicionarNaLista(evento);
+        if (evento.quem === 'novo-assinante') voarAteALista(item);
       }
 
       async function carregarEstado() {
         const resposta = await fetch('/mqtt/estado');
         const estado = await resposta.json();
 
-        if (estado.status['42']) mostrarStatus(estado.status['42']);
+        const status = estado.status['42'];
+        if (status) {
+          mostrarStatus(status);
+          guardarNoBroker('guardada-status', status, new Date().toISOString());
+        }
         for (const posicao of estado.posicoes['1042'] ?? []) atualizarPosicao(posicao);
+        const ultima = rastro[rastro.length - 1];
+        if (ultima) guardarNoBroker('guardada-localizacao', `lat ${ultima.lat} · lon ${ultima.lon}`, ultima.em);
       }
 
       async function conectarNovoAssinante() {
         const botao = document.getElementById('novo-assinante');
-        const resultado = document.getElementById('resultado-assinante');
+        const erro = document.getElementById('erro-assinante');
         botao.disabled = true;
-        resultado.textContent = 'Conectando...';
+        erro.textContent = '';
 
         const resposta = await fetch('/mqtt/novo-assinante', { method: 'POST' });
-        const dados = await resposta.json();
-        resultado.textContent = resposta.ok
-          ? `tópico: ${dados.topico}\npayload: ${dados.payload}\nretain: ${dados.retain}`
-          : dados.message;
+        if (!resposta.ok) erro.textContent = (await resposta.json()).message;
         botao.disabled = false;
       }
 

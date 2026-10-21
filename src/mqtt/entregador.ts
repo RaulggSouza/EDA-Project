@@ -18,9 +18,10 @@ let passo = 0;
 
 function proximaPosicao() {
   passo = (passo + 1) % 100;
+  const angulo = (passo / 100) * 2 * Math.PI;
   return {
-    lat: Number((-22.0087 + passo * 0.0003).toFixed(6)),
-    lon: Number((-47.8909 + passo * 0.0002).toFixed(6)),
+    lat: Number((-22.0087 + Math.sin(angulo) * 0.006).toFixed(6)),
+    lon: Number((-47.8909 + Math.cos(angulo) * 0.008).toFixed(6)),
     em: new Date().toISOString(),
   };
 }

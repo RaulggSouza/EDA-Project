@@ -12,7 +12,7 @@ const url = process.env.MQTT_URL ?? 'mqtt://localhost:1883';
 type Posicao = { lat: number; lon: number; em: string };
 
 export type EventoMqtt = {
-  quem: 'rastreamento' | 'auditoria';
+  quem: 'rastreamento' | 'auditoria' | 'novo-assinante';
   topico: string;
   payload: string;
   retain: boolean;
@@ -99,6 +99,13 @@ export class RastreamentoService implements OnModuleInit, OnModuleDestroy {
         console.log(
           `[novo assinante] recebeu ${topico} com retain=${packet.retain}`,
         );
+        this.eventos.next({
+          quem: 'novo-assinante',
+          topico,
+          payload: msg.toString(),
+          retain: packet.retain,
+          em: new Date().toISOString(),
+        });
         resolve({ topico, payload: msg.toString(), retain: packet.retain });
       });
     });
