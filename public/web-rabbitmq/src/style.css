@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135deg, #6a85b6, #bac8e0 55%, #d9b8c4);
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+#app {
+  box-sizing: border-box;
+  height: 100vh;
+  padding-bottom: 2.25rem;
+}

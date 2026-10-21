@@ -9,4 +9,6 @@ export interface AmqpMessageConsumer extends MessageConsumer {
     queue: string,
     handler: (message: AmqpIncomingMessage) => Promise<void>,
   ): Promise<void>;
+  pauseAll(): Promise<void>;
+  resumeAll(): Promise<void>;
 }

@@ -33,38 +33,64 @@ services:
 
   inventory:
     <<: *saga-service
+    ports:
+      - "3001:3001"
     environment:
+      PORT: 3001
       MESSAGING_DRIVER: rabbitmq
       SERVICE: inventory
       RABBITMQ_URL: amqp://rabbitmq:5672
 
   payment:
     <<: *saga-service
+    ports:
+      - "3002:3002"
     environment:
+      PORT: 3002
       MESSAGING_DRIVER: rabbitmq
       SERVICE: payment
       RABBITMQ_URL: amqp://rabbitmq:5672
 
   invoice:
     <<: *saga-service
+    ports:
+      - "3003:3003"
     environment:
+      PORT: 3003
       MESSAGING_DRIVER: rabbitmq
       SERVICE: invoice
       RABBITMQ_URL: amqp://rabbitmq:5672
 
   email:
     <<: *saga-service
+    ports:
+      - "3004:3004"
     environment:
+      PORT: 3004
       MESSAGING_DRIVER: rabbitmq
       SERVICE: email
       RABBITMQ_URL: amqp://rabbitmq:5672
 
   dispatch:
     <<: *saga-service
+    ports:
+      - "3005:3005"
     environment:
+      PORT: 3005
       MESSAGING_DRIVER: rabbitmq
       SERVICE: dispatch
       RABBITMQ_URL: amqp://rabbitmq:5672
 
+  web:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./public/web-rabbitmq:/app
+      - web-node-modules:/app/node_modules
+
 volumes:
   rabbitmq-data:
+  web-node-modules:

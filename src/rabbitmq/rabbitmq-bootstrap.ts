@@ -25,13 +25,8 @@ export async function bootstrapRabbitmq(): Promise<void> {
     );
   }
 
-  if (service === 'order') {
-    const app = await NestFactory.create(module);
-    app.enableShutdownHooks();
-    await app.listen(process.env.PORT ?? 3000);
-    return;
-  }
-
-  const context = await NestFactory.createApplicationContext(module);
-  context.enableShutdownHooks();
+  const app = await NestFactory.create(module);
+  app.enableCors();
+  app.enableShutdownHooks();
+  await app.listen(process.env.PORT ?? 3000);
 }

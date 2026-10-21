@@ -39,17 +39,21 @@ export class OrderService implements OnModuleInit {
     });
   }
 
-  async createOrder(order: OrderPayload): Promise<void> {
+  async createOrder(order: OrderPayload, broken = false): Promise<void> {
     this.orders.set(order.orderId, 'PENDING');
 
     await this.publisher.publish({
       destination: Exchanges.ORDER,
       routingKey: RoutingKeys.ORDER_CREATED,
       key: order.orderId,
-      payload: order,
+      payload: broken ? JSON.stringify(order).slice(0, -1) : order,
     });
 
     console.log(`[ORDER] ${order.orderId} created`);
+  }
+
+  list(): { orderId: string; status: OrderStatus }[] {
+    return [...this.orders].map(([orderId, status]) => ({ orderId, status }));
   }
 
   getStatus(orderId: string): OrderStatus | undefined {
