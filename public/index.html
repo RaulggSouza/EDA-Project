@@ -1,0 +1,1425 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta
+      name="description"
+      content="Demonstração interativa de webhooks, autenticação, idempotência e Apache Kafka."
+    />
+
+    <title>EventFlow | Webhook Lab</title>
+
+    <style>
+      :root {
+        color-scheme: dark;
+
+        --background: #090b12;
+        --surface: #11141f;
+        --surface-light: #171b29;
+        --border: #272c3d;
+        --text: #f4f5fb;
+        --muted: #969db3;
+        --purple: #9b87ff;
+        --purple-light: #c2b5ff;
+        --green: #50dfa1;
+        --red: #ff7185;
+        --yellow: #f4c96b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(
+            ellipse at 75% 0%,
+            rgba(114, 86, 255, 0.12),
+            transparent 38%
+          ),
+          var(--background);
+        color: var(--text);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        font-size: 14px;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      button:focus-visible {
+        outline: 2px solid var(--purple-light);
+        outline-offset: 4px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 240px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+
+      /* Sidebar */
+
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        padding: 28px 18px;
+        background: rgba(12, 14, 23, 0.88);
+        border-right: 1px solid var(--border);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 42px 8px;
+      }
+
+      .brand-icon {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        color: white;
+        background: linear-gradient(135deg, #917aff, #6546d9);
+        font-size: 21px;
+        font-weight: 800;
+        box-shadow: 0 6px 24px #7958ff35;
+      }
+
+      .brand-name {
+        font-size: 17px;
+        font-weight: 750;
+        letter-spacing: -0.5px;
+      }
+
+      .brand-subtitle {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .nav-label {
+        padding: 0 10px;
+        margin-bottom: 12px;
+        color: #747b94;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        margin-bottom: 5px;
+        color: var(--muted);
+        border-radius: 9px;
+      }
+
+      .nav-item.active {
+        color: var(--purple-light);
+        background: #8d77ff15;
+        border: 1px solid #8d77ff28;
+      }
+
+      .nav-icon {
+        width: 20px;
+        text-align: center;
+        font-size: 16px;
+      }
+
+      .sidebar-bottom {
+        margin-top: auto;
+      }
+
+      .connection-card {
+        padding: 15px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+      }
+
+      .connection-title {
+        margin-bottom: 14px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .connection-status {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-weight: 650;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 12px #50dfa160;
+      }
+
+      .status-dot.checking {
+        background: var(--yellow);
+        box-shadow: none;
+      }
+
+      .connection-note {
+        margin-top: 9px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.6;
+      }
+
+      /* Main */
+
+      .main {
+        width: 100%;
+        max-width: 1600px;
+        padding: 32px clamp(20px, 4vw, 54px) 48px;
+        margin: 0 auto;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .breadcrumb {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .breadcrumb strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .environment {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        color: var(--purple-light);
+        background: #8d77ff12;
+        border: 1px solid #8d77ff35;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: 0.5px;
+      }
+
+      .page-heading {
+        margin: 34px 0 26px;
+      }
+
+      .eyebrow {
+        color: var(--purple-light);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.7px;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 12px 0;
+        font-size: clamp(29px, 3.5vw, 42px);
+        line-height: 1.15;
+        letter-spacing: -1.7px;
+      }
+
+      .page-description {
+        max-width: 650px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.8;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .metric {
+        padding: 20px;
+        background: linear-gradient(145deg, #141827, #10131d);
+        border: 1px solid var(--border);
+        border-radius: 13px;
+      }
+
+      .metric-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .metric-icon {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        color: var(--purple-light);
+        background: #9278ff16;
+        border-radius: 9px;
+        font-size: 16px;
+      }
+
+      .metric-value {
+        margin-top: 18px;
+        font-size: 28px;
+        font-weight: 750;
+        letter-spacing: -1px;
+      }
+
+      .metric-caption {
+        margin-top: 5px;
+        color: #777f98;
+        font-size: 11px;
+      }
+
+      .section {
+        padding: 24px;
+        margin-bottom: 22px;
+        background: linear-gradient(145deg, #131724, #10131d);
+        border: 1px solid var(--border);
+        border-radius: 15px;
+      }
+
+      .section-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 22px;
+      }
+
+      .section-heading h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: -0.2px;
+      }
+
+      .section-heading p {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.7;
+      }
+
+      .endpoint {
+        padding: 8px 10px;
+        color: var(--green);
+        background: #50dfa10d;
+        border: 1px solid #50dfa128;
+        border-radius: 7px;
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+
+      /* Buttons */
+
+      .actions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .action-card {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px;
+        background: #0d1019;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        transition:
+          border-color 160ms ease,
+          transform 160ms ease;
+      }
+
+      .action-card:hover {
+        transform: translateY(-2px);
+      }
+
+      .action-card.secure:hover {
+        border-color: #50dfa16b;
+      }
+
+      .action-card.unsafe:hover {
+        border-color: #ff71856b;
+      }
+
+      .action-icon {
+        display: grid;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        margin-bottom: 17px;
+        border-radius: 12px;
+        font-size: 19px;
+      }
+
+      .action-card.replay:hover {
+        border-color: #8b7cff80;
+      }
+
+      .action-card.replay .action-icon {
+        color: #a99cff;
+        background: #8b7cff20;
+      }
+
+      .action-button.replay-button {
+        color: #fff;
+        background: #6554c0;
+      }
+
+      .secure .action-icon {
+        color: var(--green);
+        background: #50dfa114;
+      }
+
+      .unsafe .action-icon {
+        color: var(--red);
+        background: #ff718514;
+      }
+
+      .action-card h3 {
+        margin: 0;
+        font-size: 14px;
+      }
+
+      .action-card p {
+        min-height: 42px;
+        margin: 9px 0 20px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.7;
+      }
+
+      .action-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 750;
+        transition: opacity 160ms ease;
+      }
+
+      .action-button:hover {
+        opacity: 0.86;
+      }
+
+      .action-button:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+
+      .secure .action-button {
+        color: #071a12;
+        background: var(--green);
+      }
+
+      .unsafe .action-button {
+        color: #fff;
+        background: #a8394e;
+      }
+
+      /* Pipeline */
+
+      .pipeline {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 9px;
+      }
+
+      .pipeline-step {
+        position: relative;
+        min-width: 0;
+        padding: 15px 11px;
+        background: #0d1019;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        transition: border-color 180ms ease;
+      }
+
+      .pipeline-step.done {
+        border-color: #50dfa15c;
+        background: #50dfa108;
+      }
+
+      .pipeline-step.failed {
+        border-color: #ff71856c;
+        background: #ff71850a;
+      }
+
+      .pipeline-step.current {
+        border-color: #9b87ff80;
+        background: #9b87ff0d;
+      }
+
+      .step-number {
+        display: grid;
+        place-items: center;
+        width: 27px;
+        height: 27px;
+        margin-bottom: 13px;
+        color: var(--purple-light);
+        background: #9b87ff19;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .pipeline-step.done .step-number {
+        color: var(--green);
+        background: #50dfa119;
+      }
+
+      .pipeline-step.failed .step-number {
+        color: var(--red);
+        background: #ff718519;
+      }
+
+      .pipeline-step h3 {
+        margin: 0;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .pipeline-step p {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.6;
+      }
+
+      .pipeline-status {
+        display: block;
+        margin-top: 12px;
+        color: #777f98;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .pipeline-step.done .pipeline-status {
+        color: var(--green);
+      }
+
+      .pipeline-step.failed .pipeline-status {
+        color: var(--red);
+      }
+
+      /* Response */
+
+      .response-panel {
+        overflow: hidden;
+        background: #0b0e16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+      }
+
+      .response-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 13px 16px;
+        background: #121622;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .response-label {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .response-label span {
+        color: var(--muted);
+        font-weight: 400;
+      }
+
+      .http-status {
+        padding: 5px 9px;
+        color: var(--muted);
+        background: #ffffff08;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-size: 11px;
+      }
+
+      .http-status.success {
+        color: var(--green);
+        border-color: #50dfa135;
+      }
+
+      .http-status.error {
+        color: var(--red);
+        border-color: #ff718535;
+      }
+
+      .response-body {
+        padding: 19px;
+        overflow-x: auto;
+      }
+
+      pre {
+        min-height: 85px;
+        margin: 0;
+        color: #c6cde0;
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.85;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .response-hint {
+        margin-top: 15px;
+        padding-top: 13px;
+        color: var(--muted);
+        border-top: 1px solid var(--border);
+        font-size: 11px;
+        line-height: 1.7;
+      }
+
+      /* History */
+
+      .history-list {
+        display: grid;
+        gap: 0;
+      }
+
+      .history-empty {
+        padding: 23px 10px;
+        color: var(--muted);
+        text-align: center;
+        font-size: 12px;
+      }
+
+      .history-row {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 0;
+        border-top: 1px solid #252a39;
+      }
+
+      .history-icon {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        font-weight: 800;
+      }
+
+      .history-icon.success {
+        color: var(--green);
+        background: #50dfa114;
+      }
+
+      .history-icon.error {
+        color: var(--red);
+        background: #ff718514;
+      }
+
+      .history-title {
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .history-subtitle {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 10px;
+        overflow-wrap: anywhere;
+      }
+
+      .history-badge {
+        padding: 6px 8px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--muted);
+        font-size: 10px;
+        white-space: nowrap;
+      }
+
+      .history-badge.success {
+        color: var(--green);
+        border-color: #50dfa130;
+      }
+
+      .history-badge.error {
+        color: var(--red);
+        border-color: #ff718530;
+      }
+
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding-top: 22px;
+        color: #747b94;
+        font-size: 10px;
+      }
+
+      @media (max-width: 1000px) {
+        .layout {
+          grid-template-columns: 190px minmax(0, 1fr);
+        }
+
+        .pipeline {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 700px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          padding: 15px 20px;
+          border-right: 0;
+          border-bottom: 1px solid var(--border);
+        }
+
+        .brand {
+          margin: 0;
+        }
+
+        .nav-label,
+        .nav-item,
+        .sidebar-bottom {
+          display: none;
+        }
+
+        .main {
+          padding: 22px 16px 32px;
+        }
+
+        .metrics {
+          grid-template-columns: 1fr;
+        }
+
+        .actions {
+          grid-template-columns: 1fr;
+        }
+
+        .pipeline {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .section {
+          padding: 17px;
+        }
+
+        .section-heading {
+          flex-direction: column;
+        }
+
+        .endpoint {
+          white-space: normal;
+          overflow-wrap: anywhere;
+        }
+
+        .page-heading {
+          margin-top: 26px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-icon">E</div>
+
+          <div>
+            <div class="brand-name">EventFlow</div>
+            <div class="brand-subtitle">Event-driven architecture</div>
+          </div>
+        </div>
+
+        <div class="nav-label">Workspace</div>
+
+        <div class="nav-item active">
+          <span class="nav-icon">◈</span>
+          Webhook Lab
+        </div>
+
+        <div class="nav-item">
+          <span class="nav-icon">⇄</span>
+          Event pipeline
+        </div>
+
+        <div class="nav-item">
+          <span class="nav-icon">▤</span>
+          Request history
+        </div>
+
+        <div class="sidebar-bottom">
+          <div class="connection-card">
+            <div class="connection-title">Backend</div>
+
+            <div class="connection-status">
+              <span id="connectionDot" class="status-dot"></span>
+              <span id="connectionText">Pronto para testar</span>
+            </div>
+
+            <div class="connection-note">
+              NestJS API<br />
+              POST /webhooks/orders
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="breadcrumb">
+            Workspace &nbsp;/&nbsp; <strong>Webhook Lab</strong>
+          </div>
+
+          <div class="environment">
+            <span class="status-dot"></span>
+            DEMO ENVIRONMENT
+          </div>
+        </header>
+
+        <section class="page-heading">
+          <div class="eyebrow">Interactive playground</div>
+
+          <h1>Webhook Security Lab</h1>
+
+          <p class="page-description">
+            Explore como um evento percorre seu backend: da autenticação do
+            emissor à publicação no Kafka. Teste cenários seguros, rejeições e
+            eventos duplicados.
+          </p>
+        </section>
+
+        <section class="metrics">
+          <article class="metric">
+            <div class="metric-top">
+              Requisições executadas
+              <span class="metric-icon">↗</span>
+            </div>
+
+            <div id="totalRequests" class="metric-value">0</div>
+
+            <div class="metric-caption">Testes realizados nesta sessão</div>
+          </article>
+
+          <article class="metric">
+            <div class="metric-top">
+              Eventos publicados
+              <span class="metric-icon">⇢</span>
+            </div>
+
+            <div id="publishedCount" class="metric-value">0</div>
+
+            <div class="metric-caption">Publicações confirmadas pela API</div>
+          </article>
+
+          <article class="metric">
+            <div class="metric-top">
+              Requisições rejeitadas
+              <span class="metric-icon">⛨</span>
+            </div>
+
+            <div id="rejectedCount" class="metric-value">0</div>
+
+            <div class="metric-caption">
+              Falhas de autenticação ou validação
+            </div>
+          </article>
+        </section>
+
+        <section class="section">
+          <div class="section-heading">
+            <div>
+              <h2>Simular um webhook</h2>
+              <p>
+                Escolha como o emissor irá se autenticar. O backend fará as
+                verificações.
+              </p>
+            </div>
+
+            <div class="endpoint">POST /webhooks/orders</div>
+          </div>
+
+          <div class="actions">
+            <!-- Enviar um evento novo -->
+            <article class="action-card secure">
+              <div class="action-icon">✓</div>
+
+              <h3>Novo pedido</h3>
+
+              <p>
+                Gera identificadores inéditos e envia um pedido autenticado para
+                publicação no Kafka.
+              </p>
+
+              <button
+                id="secureButton"
+                class="action-button"
+                onclick="sendOrder('new')"
+              >
+                <span>Enviar novo pedido</span>
+                <span>→</span>
+              </button>
+            </article>
+
+            <!-- Reenviar o mesmo evento -->
+            <article class="action-card replay">
+              <div class="action-icon">↻</div>
+
+              <h3>Reenvio de evento</h3>
+
+              <p>
+                Reenvia o último pedido publicado, com o mesmo eventId, para
+                demonstrar a deduplicação.
+              </p>
+
+              <button
+                id="resendButton"
+                class="action-button replay-button"
+                onclick="sendOrder('resend')"
+                disabled
+              >
+                <span>Reenviar último pedido</span>
+                <span>↻</span>
+              </button>
+            </article>
+
+            <!-- Simular emissor não autenticado -->
+            <article class="action-card unsafe">
+              <div class="action-icon">⛨</div>
+
+              <h3>Emissor não autorizado</h3>
+
+              <p>
+                Simula um emissor com token inválido. A API deve rejeitar a
+                requisição antes do Kafka.
+              </p>
+
+              <button
+                id="unsafeButton"
+                class="action-button"
+                onclick="sendOrder('unsafe')"
+              >
+                <span>Simular envio não autorizado</span>
+                <span>→</span>
+              </button>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-heading">
+            <div>
+              <h2>Pipeline de processamento</h2>
+              <p>Acompanhe as etapas envolvidas na última requisição.</p>
+            </div>
+          </div>
+
+          <div class="pipeline">
+            <article class="pipeline-step" data-step="1">
+              <div class="step-number">01</div>
+              <h3>Recepção HTTP</h3>
+              <p>O endpoint recebe o evento.</p>
+              <span class="pipeline-status">AGUARDANDO</span>
+            </article>
+
+            <article class="pipeline-step" data-step="2">
+              <div class="step-number">02</div>
+              <h3>Autenticação</h3>
+              <p>O token do emissor é verificado.</p>
+              <span class="pipeline-status">AGUARDANDO</span>
+            </article>
+
+            <article class="pipeline-step" data-step="3">
+              <div class="step-number">03</div>
+              <h3>Validação</h3>
+              <p>Os campos obrigatórios são conferidos.</p>
+              <span class="pipeline-status">AGUARDANDO</span>
+            </article>
+
+            <article class="pipeline-step" data-step="4">
+              <div class="step-number">04</div>
+              <h3>Idempotência</h3>
+              <p>O eventId é verificado.</p>
+              <span class="pipeline-status">AGUARDANDO</span>
+            </article>
+
+            <article class="pipeline-step" data-step="5">
+              <div class="step-number">05</div>
+              <h3>Publicação Kafka</h3>
+              <p>O evento segue para orders.</p>
+              <span class="pipeline-status">AGUARDANDO</span>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-heading">
+            <div>
+              <h2>Resposta do backend</h2>
+              <p>Requisição HTTP e resposta JSON recebida do NestJS.</p>
+            </div>
+          </div>
+
+          <div class="response-panel">
+            <div class="response-toolbar">
+              <div class="response-label">
+                API Response
+                <span id="responseTime">Aguardando requisição</span>
+              </div>
+
+              <div id="httpStatus" class="http-status">HTTP ---</div>
+            </div>
+
+            <div class="response-body">
+              <pre id="responseBody">
+{
+  "message": "Escolha um cenário para começar.",
+  "endpoint": "POST /webhooks/orders"
+}</pre>
+
+              <div id="responseHint" class="response-hint">
+                O resultado da última requisição aparecerá aqui.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-heading">
+            <div>
+              <h2>Histórico de eventos</h2>
+              <p>Registro local dos testes realizados nesta página.</p>
+            </div>
+          </div>
+
+          <div id="history" class="history-list">
+            <div class="history-empty">Nenhuma requisição executada ainda.</div>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <span>EventFlow · Webhook Security Lab</span>
+          <span>NestJS · TypeScript · Apache Kafka</span>
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      const stats = {
+        total: 0,
+        published: 0,
+        rejected: 0,
+      };
+
+      const history = [];
+
+      // Armazena o último evento publicado com sucesso.
+      // O reenvio reutilizará exatamente os mesmos identificadores.
+      let lastSuccessfulEvent = null;
+
+      function createNewOrderEvent() {
+        const id = crypto.randomUUID();
+
+        return {
+          eventId: `evt-${id}`,
+          orderId: `PED-${id.slice(0, 8).toUpperCase()}`,
+          message: 'Pedido enviado pela interface EventFlow',
+        };
+      }
+
+      let isSending = false;
+
+      const $ = (id) => document.getElementById(id);
+
+      function setConnection(connected, text) {
+        $('connectionText').textContent = text;
+
+        $('connectionDot').classList.toggle('checking', !connected);
+      }
+
+      function resetPipeline() {
+        document.querySelectorAll('.pipeline-step').forEach((step) => {
+          step.classList.remove('done', 'failed', 'current');
+
+          const status = step.querySelector('.pipeline-status');
+
+          status.textContent = 'AGUARDANDO';
+        });
+      }
+
+      function setStep(number, state, label) {
+        const step = document.querySelector(
+          `.pipeline-step[data-step="${number}"]`,
+        );
+
+        if (!step) return;
+
+        step.classList.remove('done', 'failed', 'current');
+
+        if (state) {
+          step.classList.add(state);
+        }
+
+        step.querySelector('.pipeline-status').textContent = label;
+      }
+
+      function updateStats() {
+        $('totalRequests').textContent = stats.total;
+        $('publishedCount').textContent = stats.published;
+        $('rejectedCount').textContent = stats.rejected;
+      }
+
+      function renderHistory() {
+        const container = $('history');
+
+        if (history.length === 0) {
+          container.innerHTML = `
+          <div class="history-empty">
+            Nenhuma requisição executada ainda.
+          </div>
+        `;
+
+          return;
+        }
+
+        container.replaceChildren();
+
+        for (const item of history) {
+          const row = document.createElement('div');
+          row.className = 'history-row';
+
+          const icon = document.createElement('div');
+          icon.className =
+            'history-icon ' + (item.success ? 'success' : 'error');
+          icon.textContent = item.success ? '✓' : '×';
+
+          const details = document.createElement('div');
+
+          const title = document.createElement('div');
+          title.className = 'history-title';
+          title.textContent = item.title;
+
+          const subtitle = document.createElement('div');
+          subtitle.className = 'history-subtitle';
+          subtitle.textContent = item.detail;
+
+          details.append(title, subtitle);
+
+          const badge = document.createElement('div');
+          badge.className =
+            'history-badge ' + (item.success ? 'success' : 'error');
+          badge.textContent = `HTTP ${item.status}`;
+
+          row.append(icon, details, badge);
+          container.append(row);
+        }
+      }
+
+      function addHistory(item) {
+        history.unshift(item);
+
+        if (history.length > 6) {
+          history.pop();
+        }
+
+        renderHistory();
+      }
+
+      function updateResponse(status, data, elapsed, hint) {
+        $('httpStatus').textContent = `HTTP ${status}`;
+
+        $('httpStatus').classList.remove('success', 'error');
+
+        $('httpStatus').classList.add(
+          status >= 200 && status < 300 ? 'success' : 'error',
+        );
+
+        $('responseTime').textContent = `${elapsed} ms`;
+
+        $('responseBody').textContent = JSON.stringify(data, null, 2);
+
+        $('responseHint').textContent = hint;
+      }
+
+      async function sendOrder(mode) {
+        if (isSending) return;
+
+        if (mode === 'resend' && !lastSuccessfulEvent) {
+          return;
+        }
+
+        isSending = true;
+
+        const buttons = [
+          $('secureButton'),
+          $('resendButton'),
+          $('unsafeButton'),
+        ];
+
+        buttons.forEach((button) => {
+          button.disabled = true;
+        });
+
+        resetPipeline();
+
+        setConnection(false, 'Processando requisição');
+        setStep(1, 'current', 'ENVIANDO');
+
+        let event;
+
+        if (mode === 'new') {
+          // Sempre gera um evento novo.
+          event = createNewOrderEvent();
+        } else if (mode === 'resend') {
+          // Reutiliza exatamente o evento anteriormente publicado.
+          event = { ...lastSuccessfulEvent };
+        } else {
+          // Evento de teste para simular uma falha de autenticação.
+          event = {
+            ...createNewOrderEvent(),
+            message: 'Tentativa de pedido não autenticado',
+          };
+        }
+
+        const token = mode === 'unsafe' ? 'token-invalido' : 'tutorial-secret';
+
+        const startedAt = performance.now();
+
+        $('responseBody').textContent = 'Enviando requisição ao backend...';
+
+        $('httpStatus').textContent = 'HTTP ...';
+
+        try {
+          const response = await fetch('/webhooks/orders', {
+            method: 'POST',
+
+            headers: {
+              'Content-Type': 'application/json',
+              'x-webhook-token': token,
+            },
+
+            body: JSON.stringify(event),
+          });
+
+          const elapsed = Math.round(performance.now() - startedAt);
+
+          let data;
+
+          try {
+            data = await response.json();
+          } catch {
+            data = {
+              message: 'O servidor não retornou JSON válido.',
+            };
+          }
+
+          stats.total++;
+
+          setStep(1, 'done', 'CONCLUÍDO');
+
+          if (response.status === 401) {
+            // Emissor não autenticado.
+            stats.rejected++;
+
+            setStep(2, 'failed', 'REJEITADO');
+            setStep(3, '', 'NÃO EXECUTADA');
+            setStep(4, '', 'NÃO EXECUTADA');
+            setStep(5, '', 'NÃO EXECUTADA');
+
+            updateResponse(
+              response.status,
+              data,
+              elapsed,
+              'O emissor não foi autenticado. O evento foi rejeitado antes da validação e da publicação no Kafka.',
+            );
+
+            addHistory({
+              title: 'Emissor rejeitado',
+              detail: `Evento ${event.eventId}`,
+              status: response.status,
+              success: false,
+            });
+          } else if (!response.ok) {
+            // Erro de validação ou outra falha da API.
+            stats.rejected++;
+
+            setStep(2, 'done', 'AUTENTICADO');
+            setStep(3, 'failed', 'ERRO');
+            setStep(4, '', 'NÃO EXECUTADA');
+            setStep(5, '', 'NÃO EXECUTADA');
+
+            updateResponse(
+              response.status,
+              data,
+              elapsed,
+              'A API retornou um erro. Confira a resposta para identificar a etapa que falhou.',
+            );
+
+            addHistory({
+              title: 'Requisição com erro',
+              detail: `Evento ${event.eventId}`,
+              status: response.status,
+              success: false,
+            });
+          } else if (data.duplicate) {
+            // O evento já havia sido processado.
+            setStep(2, 'done', 'AUTENTICADO');
+            setStep(3, 'done', 'VÁLIDO');
+            setStep(4, 'failed', 'DUPLICADO');
+            setStep(5, '', 'PUBLICAÇÃO IGNORADA');
+
+            updateResponse(
+              response.status,
+              data,
+              elapsed,
+              'O eventId já havia sido processado. A API reconheceu a duplicidade e não publicou o evento novamente no Kafka.',
+            );
+
+            addHistory({
+              title: 'Evento duplicado ignorado',
+              detail: `Evento ${event.eventId}`,
+              status: response.status,
+              success: true,
+            });
+          } else if (data.accepted) {
+            // Evento novo publicado com sucesso.
+            stats.published++;
+
+            setStep(2, 'done', 'AUTENTICADO');
+            setStep(3, 'done', 'VÁLIDO');
+            setStep(4, 'done', 'EVENTO NOVO');
+            setStep(5, 'done', 'PUBLICADO');
+
+            // Guarda o evento para permitir o reenvio posterior.
+            lastSuccessfulEvent = { ...event };
+
+            updateResponse(
+              response.status,
+              data,
+              elapsed,
+              'O emissor foi autenticado, o evento passou pela validação e a publicação no Kafka foi concluída.',
+            );
+
+            addHistory({
+              title: 'Evento publicado',
+              detail: `Pedido ${event.orderId}`,
+              status: response.status,
+              success: true,
+            });
+          } else {
+            updateResponse(
+              response.status,
+              data,
+              elapsed,
+              'O backend respondeu, mas o resultado não corresponde aos cenários esperados.',
+            );
+          }
+
+          setConnection(true, 'Requisição concluída');
+        } catch (error) {
+          const elapsed = Math.round(performance.now() - startedAt);
+
+          resetPipeline();
+
+          setStep(1, 'failed', 'FALHA DE CONEXÃO');
+
+          updateResponse(
+            'ERR',
+            {
+              message: 'Não foi possível acessar o backend.',
+              details: String(error),
+            },
+            elapsed,
+            'Confira se a aplicação NestJS está rodando e se o navegador está aberto na origem correta.',
+          );
+
+          setConnection(false, 'Backend indisponível');
+
+          addHistory({
+            title: 'Falha de conexão',
+            detail: 'A API não respondeu',
+            status: 'ERR',
+            success: false,
+          });
+        } finally {
+          updateStats();
+
+          isSending = false;
+
+          buttons.forEach((button) => {
+            button.disabled = false;
+          });
+
+          // O botão de reenvio só fica disponível depois
+          // que algum evento tiver sido publicado com sucesso.
+          $('resendButton').disabled = !lastSuccessfulEvent;
+        }
+      }
+
+      updateStats();
+      renderHistory();
+    </script>
+  </body>
+</html>
