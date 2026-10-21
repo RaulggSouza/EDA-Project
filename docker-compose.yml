@@ -37,6 +37,7 @@ services:
       PORT: 3000
       KAFKA_BROKERS: kafka:29092
       MESSAGE_BROKER: kafka
+      WEBHOOK_SECRET: tutorial-secret
     depends_on:
       - kafka
 
