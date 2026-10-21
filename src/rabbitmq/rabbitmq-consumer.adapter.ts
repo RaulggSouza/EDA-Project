@@ -8,8 +8,13 @@ import { IncomingMessage } from '../messaging/interfaces/message-consumer.interf
 import { RabbitmqConnectionService } from './rabbitmq-connection.service';
 import { AMQP_TOPOLOGY } from './rabbitmq.constants';
 
+type MessageHandler = (message: AmqpIncomingMessage) => Promise<void>;
+
 @Injectable()
 export class RabbitmqConsumerAdapter implements AmqpMessageConsumer {
+  private readonly handlers = new Map<string, MessageHandler>();
+  private readonly consumerTags = new Map<string, string>();
+
   constructor(
     private readonly connection: RabbitmqConnectionService,
     @Inject(AMQP_TOPOLOGY)
@@ -24,15 +29,35 @@ export class RabbitmqConsumerAdapter implements AmqpMessageConsumer {
     await this.consume(destination, handler);
   }
 
-  async consume(
+  async consume(queue: string, handler: MessageHandler): Promise<void> {
+    this.handlers.set(queue, handler);
+    await this.startConsuming(queue, handler);
+  }
+
+  async pauseAll(): Promise<void> {
+    for (const consumerTag of this.consumerTags.values()) {
+      await this.connection.channel.cancel(consumerTag);
+    }
+    this.consumerTags.clear();
+  }
+
+  async resumeAll(): Promise<void> {
+    for (const [queue, handler] of this.handlers) {
+      if (!this.consumerTags.has(queue)) {
+        await this.startConsuming(queue, handler);
+      }
+    }
+  }
+
+  private async startConsuming(
     queue: string,
-    handler: (message: AmqpIncomingMessage) => Promise<void>,
+    handler: MessageHandler,
   ): Promise<void> {
     await this.topology.declareTopology();
 
     const { channel } = this.connection;
 
-    await channel.consume(queue, async (message) => {
+    const { consumerTag } = await channel.consume(queue, async (message) => {
       if (!message) {
         return;
       }
@@ -49,5 +74,7 @@ export class RabbitmqConsumerAdapter implements AmqpMessageConsumer {
         channel.nack(message, false, false);
       }
     });
+
+    this.consumerTags.set(queue, consumerTag);
   }
 }

@@ -1,6 +1,7 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import type { AmqpMessageConsumer } from '../../../messaging/interfaces/amqp-message-consumer.interface';
 import type { AmqpMessagePublisher } from '../../../messaging/interfaces/amqp-message-publisher.interface';
+import { ServiceActivity } from '../../control/service-activity';
 import { OrderPayload } from '../../events/saga-events';
 import { AMQP_CONSUMER, AMQP_PUBLISHER } from '../../rabbitmq.constants';
 import { Exchanges, Queues, RoutingKeys } from '../../topology';
@@ -14,6 +15,7 @@ export class PaymentService implements OnModuleInit {
     private readonly publisher: AmqpMessagePublisher,
     @Inject(AMQP_CONSUMER)
     private readonly consumer: AmqpMessageConsumer,
+    private readonly activity: ServiceActivity,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -27,7 +29,9 @@ export class PaymentService implements OnModuleInit {
 
   private async process(order: OrderPayload): Promise<void> {
     if (order.simulate === 'payment_declined') {
-      console.log(`[PAYMENT] ${order.orderId} declined`);
+      this.activity.record('error', `${order.orderId} declined`, {
+        orderId: order.orderId,
+      });
       await this.publisher.publish({
         destination: Exchanges.PAYMENT,
         routingKey: RoutingKeys.PAYMENT_DECLINED,
@@ -38,7 +42,11 @@ export class PaymentService implements OnModuleInit {
     }
 
     this.payments.add(order.orderId);
-    console.log(`[PAYMENT] ${order.orderId} approved (${order.amount})`);
+    this.activity.record(
+      'success',
+      `${order.orderId} approved (${order.amount})`,
+      { orderId: order.orderId },
+    );
     await this.publisher.publish({
       destination: Exchanges.PAYMENT,
       routingKey: RoutingKeys.PAYMENT_APPROVED,
@@ -49,10 +57,16 @@ export class PaymentService implements OnModuleInit {
 
   private async refund(order: OrderPayload): Promise<void> {
     if (!this.payments.delete(order.orderId)) {
-      console.log(`[PAYMENT] No payment found for ${order.orderId}`);
+      this.activity.record('info', `No payment found for ${order.orderId}`, {
+        orderId: order.orderId,
+      });
       return;
     }
 
-    console.log(`[PAYMENT] ${order.orderId} refunded (${order.amount})`);
+    this.activity.record(
+      'info',
+      `${order.orderId} refunded (${order.amount})`,
+      { orderId: order.orderId },
+    );
   }
 }

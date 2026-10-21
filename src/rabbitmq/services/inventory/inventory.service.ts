@@ -1,6 +1,7 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import type { AmqpMessageConsumer } from '../../../messaging/interfaces/amqp-message-consumer.interface';
 import type { AmqpMessagePublisher } from '../../../messaging/interfaces/amqp-message-publisher.interface';
+import { ServiceActivity } from '../../control/service-activity';
 import { OrderPayload } from '../../events/saga-events';
 import { AMQP_CONSUMER, AMQP_PUBLISHER } from '../../rabbitmq.constants';
 import { Exchanges, Queues, RoutingKeys } from '../../topology';
@@ -14,6 +15,7 @@ export class InventoryService implements OnModuleInit {
     private readonly publisher: AmqpMessagePublisher,
     @Inject(AMQP_CONSUMER)
     private readonly consumer: AmqpMessageConsumer,
+    private readonly activity: ServiceActivity,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -30,7 +32,9 @@ export class InventoryService implements OnModuleInit {
 
   private async reserve(order: OrderPayload): Promise<void> {
     if (order.simulate === 'out_of_stock') {
-      console.log(`[INVENTORY] ${order.orderId} out of stock`);
+      this.activity.record('error', `${order.orderId} out of stock`, {
+        orderId: order.orderId,
+      });
       await this.publisher.publish({
         destination: Exchanges.INVENTORY,
         routingKey: RoutingKeys.INVENTORY_OUT_OF_STOCK,
@@ -41,7 +45,9 @@ export class InventoryService implements OnModuleInit {
     }
 
     this.reservations.add(order.orderId);
-    console.log(`[INVENTORY] ${order.orderId} reserved`);
+    this.activity.record('success', `${order.orderId} reserved`, {
+      orderId: order.orderId,
+    });
     await this.publisher.publish({
       destination: Exchanges.INVENTORY,
       routingKey: RoutingKeys.INVENTORY_RESERVED,
@@ -52,10 +58,16 @@ export class InventoryService implements OnModuleInit {
 
   private async release(order: OrderPayload): Promise<void> {
     if (!this.reservations.delete(order.orderId)) {
-      console.log(`[INVENTORY] No reservation found for ${order.orderId}`);
+      this.activity.record(
+        'info',
+        `No reservation found for ${order.orderId}`,
+        { orderId: order.orderId },
+      );
       return;
     }
 
-    console.log(`[INVENTORY] ${order.orderId} reservation released`);
+    this.activity.record('info', `${order.orderId} reservation released`, {
+      orderId: order.orderId,
+    });
   }
 }

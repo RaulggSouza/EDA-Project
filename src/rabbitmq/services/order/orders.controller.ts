@@ -16,12 +16,18 @@ export class OrdersController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post()
-  async createOrder(@Body() body: OrderPayload) {
+  async createOrder(@Body() body: OrderPayload & { broken?: boolean }) {
     this.validate(body);
 
-    await this.orderService.createOrder(body);
+    const { broken, ...order } = body;
+    await this.orderService.createOrder(order, broken === true);
 
-    return { status: 'Order created', orderId: body.orderId };
+    return { status: 'Order created', orderId: order.orderId };
+  }
+
+  @Get()
+  listOrders() {
+    return this.orderService.list();
   }
 
   @Get(':orderId')
