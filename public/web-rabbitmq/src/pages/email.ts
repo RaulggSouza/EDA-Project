@@ -4,7 +4,6 @@ import { monitors, type ServiceSnapshot } from '../state/service-monitor';
 import { el } from '../ui/dom';
 import { formatTimestamp } from '../ui/format';
 import { createSafariFrame } from '../ui/safari-frame';
-import { createWindow } from '../ui/window';
 
 interface TagStyle {
   label: string;
@@ -39,17 +38,10 @@ export const emailPage: Page = {
     const list = el('div', 'w-1/3 overflow-y-auto border-r border-neutral-200');
     const reader = el('div', 'min-w-0 flex-1 overflow-y-auto p-5');
 
-    const mail = createWindow({
-      title: 'Mail — Caixa de entrada',
-      className: 'h-full w-full',
-    });
-    mail.body.className = 'flex min-h-0 flex-1';
-    mail.body.append(list, reader);
-
     const frame = createSafariFrame('mail.exemplo.com/inbox');
-    frame.content.className = 'min-h-0 flex-1 overflow-hidden bg-neutral-100 p-4';
-    frame.content.append(mail.element);
-    const wrapper = el('div', 'flex h-screen items-center justify-center p-6');
+    frame.content.className = 'flex min-h-0 flex-1 overflow-hidden bg-white';
+    frame.content.append(list, reader);
+    const wrapper = el('div', 'flex h-full items-center justify-center p-6');
     wrapper.append(frame.element);
     root.append(wrapper);
 

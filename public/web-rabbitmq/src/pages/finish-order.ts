@@ -160,7 +160,7 @@ export const finishOrderPage: Page = {
 
     const frame = createSafariFrame('loja.exemplo.com/checkout');
     frame.content.append(store);
-    const wrapper = el('div', 'flex h-screen items-center justify-center p-6');
+    const wrapper = el('div', 'flex h-full items-center justify-center p-6');
     wrapper.append(frame.element);
     root.append(wrapper);
 

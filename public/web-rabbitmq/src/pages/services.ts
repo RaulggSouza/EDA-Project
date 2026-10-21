@@ -49,7 +49,14 @@ function mountTerminal(
     'absolute inset-0 hidden items-center justify-center bg-black/75 text-sm font-bold tracking-[3px] text-neutral-300',
     'OFFLINE',
   );
-  view.body.append(log, veil);
+  const clear = el(
+    'button',
+    'absolute right-4 top-2 z-10 rounded border border-neutral-600 bg-black/60 px-2 py-0.5 font-mono text-[10px] text-neutral-300 hover:bg-neutral-800',
+    'limpar logs',
+  );
+  clear.type = 'button';
+  clear.addEventListener('click', () => monitor.clear());
+  view.body.append(log, veil, clear);
   parent.append(view.element);
 
   const render = (snapshot: ServiceSnapshot) => {
@@ -67,7 +74,7 @@ function mountTerminal(
 
 export const servicesPage: Page = {
   render(root) {
-    const grid = el('div', 'grid h-screen grid-cols-2 grid-rows-2 gap-3 p-3');
+    const grid = el('div', 'grid h-full grid-cols-2 grid-rows-2 gap-3 p-3');
     const unsubscribes = PANELS.map(({ service, title }) =>
       mountTerminal(grid, service, title),
     );

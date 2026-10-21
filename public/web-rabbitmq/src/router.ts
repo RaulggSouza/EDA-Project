@@ -1,14 +1,11 @@
+import { ROUTES } from './routes';
+import { createShortcutHint } from './ui/shortcut-hint';
+
 export interface Page {
   render(root: HTMLElement): () => void;
 }
 
-const DEFAULT_ROUTE = '/finish-order';
-
-const SHORTCUTS: Record<string, string> = {
-  Digit1: '/finish-order',
-  Digit2: '/services',
-  Digit3: '/email',
-};
+const DEFAULT_ROUTE = ROUTES[0].path;
 
 export function startRouter(
   root: HTMLElement,
@@ -23,6 +20,7 @@ export function startRouter(
     cleanup();
     root.replaceChildren();
     cleanup = pages[location.pathname].render(root);
+    root.append(createShortcutHint(location.pathname));
   };
 
   const navigate = (path: string) => {
@@ -35,10 +33,12 @@ export function startRouter(
 
   window.addEventListener('popstate', show);
   window.addEventListener('keydown', (event) => {
-    const path = event.altKey ? SHORTCUTS[event.code] : undefined;
-    if (path) {
+    const route = event.altKey
+      ? ROUTES.find(({ code }) => code === event.code)
+      : undefined;
+    if (route) {
       event.preventDefault();
-      navigate(path);
+      navigate(route.path);
     }
   });
 

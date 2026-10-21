@@ -51,6 +51,10 @@ export class ServiceMonitor {
     this.timer = window.setInterval(() => void this.poll(), POLL_INTERVAL_MS);
   }
 
+  clear(): void {
+    this.update({ events: [] });
+  }
+
   stop(): Promise<void> {
     return this.control(stopService);
   }
