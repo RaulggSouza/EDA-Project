@@ -26,7 +26,6 @@ export class RastreamentoService implements OnModuleInit, OnModuleDestroy {
   private readonly eventos = new Subject<EventoMqtt>();
   private readonly status: Record<string, string> = {};
   private readonly posicoes: Record<string, Posicao[]> = {};
-  private readonly registrosAuditoria: EventoMqtt[] = [];
 
   onModuleInit() {
     this.rastreamento = mqtt.connect(url, { clientId: 'rastreamento' });
@@ -39,15 +38,13 @@ export class RastreamentoService implements OnModuleInit, OnModuleDestroy {
     });
     this.rastreamento.on('message', (topico, msg, packet) => {
       this.registrar('rastreamento', topico, msg, packet.retain);
+      const id = topico.split('/')[1];
       if (topico.startsWith('entregadores/')) {
-        this.atualizarStatus(topico.split('/')[1], msg.toString());
+        this.status[id] = msg.toString();
         return;
       }
-      const pedidoId = topico.split('/')[1];
-      const posicao = this.lerPosicao(msg);
-      if (posicao) {
-        this.atualizarLocalizacao(pedidoId, posicao.lat, posicao.lon);
-      }
+      const { lat, lon } = JSON.parse(msg.toString()) as Posicao;
+      this.atualizarLocalizacao(id, lat, lon);
     });
 
     this.auditoria = mqtt.connect(url, { clientId: 'auditoria' });
@@ -56,9 +53,7 @@ export class RastreamentoService implements OnModuleInit, OnModuleDestroy {
       this.auditoria.subscribe('entregas/+/localizacao', { qos: 1 });
     });
     this.auditoria.on('message', (topico, msg, packet) => {
-      const evento = this.registrar('auditoria', topico, msg, packet.retain);
-      this.registrosAuditoria.push(evento);
-      this.registrosAuditoria.splice(0, this.registrosAuditoria.length - 30);
+      this.registrar('auditoria', topico, msg, packet.retain);
     });
   }
 
@@ -73,17 +68,8 @@ export class RastreamentoService implements OnModuleInit, OnModuleDestroy {
     rastro.splice(0, rastro.length - 20);
   }
 
-  atualizarStatus(entregadorId: string, status: string) {
-    this.status[entregadorId] = status;
-    console.log(`[rastreamento] entregador ${entregadorId} está ${status}`);
-  }
-
   estado() {
-    return {
-      status: this.status,
-      posicoes: this.posicoes,
-      auditoria: this.registrosAuditoria,
-    };
+    return { status: this.status, posicoes: this.posicoes };
   }
 
   acompanharEventos(): Observable<EventoMqtt> {
@@ -123,8 +109,8 @@ export class RastreamentoService implements OnModuleInit, OnModuleDestroy {
     topico: string,
     msg: Buffer,
     retain: boolean,
-  ): EventoMqtt {
-    const evento = {
+  ) {
+    const evento: EventoMqtt = {
       quem,
       topico,
       payload: msg.toString(),
@@ -135,17 +121,5 @@ export class RastreamentoService implements OnModuleInit, OnModuleDestroy {
       `[${quem}] ${topico} ${evento.payload}${retain ? ' (retain)' : ''}`,
     );
     this.eventos.next(evento);
-    return evento;
-  }
-
-  private lerPosicao(msg: Buffer): { lat: number; lon: number } | null {
-    try {
-      const { lat, lon } = JSON.parse(msg.toString()) as Posicao;
-      return typeof lat === 'number' && typeof lon === 'number'
-        ? { lat, lon }
-        : null;
-    } catch {
-      return null;
-    }
   }
 }

@@ -213,10 +213,6 @@
 
         if (estado.status['42']) mostrarStatus(estado.status['42']);
         for (const posicao of estado.posicoes['1042'] ?? []) atualizarPosicao(posicao);
-        for (const evento of estado.auditoria) {
-          const { lat, lon } = JSON.parse(evento.payload);
-          adicionarNaLista('lista-auditoria', `lat ${lat} · lon ${lon}`, evento.em, evento.retain);
-        }
       }
 
       async function conectarNovoAssinante() {
