@@ -42,6 +42,11 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
+# AI development
+CLAUDE.md
+.claude/
+superpowers/
+
 # temp directory
 .temp
 .tmp

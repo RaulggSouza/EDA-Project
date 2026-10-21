@@ -1,0 +1,70 @@
+x-saga-service: &saga-service
+  build: .
+  restart: on-failure
+  depends_on:
+    rabbitmq:
+      condition: service_healthy
+
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  order:
+    <<: *saga-service
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      MESSAGING_DRIVER: rabbitmq
+      SERVICE: order
+      RABBITMQ_URL: amqp://rabbitmq:5672
+
+  inventory:
+    <<: *saga-service
+    environment:
+      MESSAGING_DRIVER: rabbitmq
+      SERVICE: inventory
+      RABBITMQ_URL: amqp://rabbitmq:5672
+
+  payment:
+    <<: *saga-service
+    environment:
+      MESSAGING_DRIVER: rabbitmq
+      SERVICE: payment
+      RABBITMQ_URL: amqp://rabbitmq:5672
+
+  invoice:
+    <<: *saga-service
+    environment:
+      MESSAGING_DRIVER: rabbitmq
+      SERVICE: invoice
+      RABBITMQ_URL: amqp://rabbitmq:5672
+
+  email:
+    <<: *saga-service
+    environment:
+      MESSAGING_DRIVER: rabbitmq
+      SERVICE: email
+      RABBITMQ_URL: amqp://rabbitmq:5672
+
+  dispatch:
+    <<: *saga-service
+    environment:
+      MESSAGING_DRIVER: rabbitmq
+      SERVICE: dispatch
+      RABBITMQ_URL: amqp://rabbitmq:5672
+
+volumes:
+  rabbitmq-data:

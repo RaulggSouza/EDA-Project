@@ -248,3 +248,35 @@ docker exec -it kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server
 # Parar o ambiente
 docker compose down
 ```
+
+## 7. Caso de uso RabbitMQ — saga coreografada de pedidos
+
+Fluxo independente do Kafka: Order → Inventory → Payment → Invoice → Email/Dispatch, com compensações. Cada serviço roda em um container próprio (`SERVICE`), usando `MESSAGING_DRIVER=rabbitmq`.
+
+```bash
+# Subir broker + 6 serviços
+docker compose -f docker-compose.rabbitmq.yml up -d --build
+
+# Management UI: http://localhost:15672 (guest / guest)
+
+# Caminho feliz
+curl -X POST localhost:3000/orders -H 'content-type: application/json' \
+  -d '{"orderId":"1","items":[{"sku":"A","quantity":1}],"amount":10}'
+
+# Consultar o status final do pedido
+curl localhost:3000/orders/1
+
+# Simular falhas: out_of_stock | payment_declined | invoice_failed
+curl -X POST localhost:3000/orders -H 'content-type: application/json' \
+  -d '{"orderId":"2","items":[{"sku":"A","quantity":1}],"amount":10,"simulate":"payment_declined"}'
+
+# Logs de um serviço
+docker compose -f docker-compose.rabbitmq.yml logs --tail 100 -f inventory
+
+# Parar o ambiente
+docker compose -f docker-compose.rabbitmq.yml down
+```
+
+Cada serviço guarda o estado em memória: não escale um serviço da saga (`--scale`), senão compensações podem cair em outra réplica sem o estado.
+
+Mensagens cujo handler falha (ex.: payload inválido) são rejeitadas sem reentrega e seguem para a fila `dead-letter` via exchange `dlx`.
