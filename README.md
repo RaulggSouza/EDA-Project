@@ -277,6 +277,23 @@ docker compose -f docker-compose.rabbitmq.yml logs --tail 100 -f inventory
 docker compose -f docker-compose.rabbitmq.yml down
 ```
 
+### Frontend (`public/web-rabbitmq`)
+
+Interface Vite + TypeScript + TailwindCSS + Axios que simula uma área de trabalho macOS. O serviço `web` do compose sobe o servidor de desenvolvimento do Vite junto com o resto:
+
+```bash
+docker compose -f docker-compose.rabbitmq.yml up -d --build
+
+# Abrir http://localhost:5173
+```
+
+- Atalhos: `Alt+1` loja (`/finish-order`), `Alt+2` serviços (`/services`), `Alt+3` e-mail (`/email`).
+- Na loja, o checkbox "Quebrar pedido" envia uma mensagem inválida, que vai para a `dead-letter` e aparece no e-mail como "Invalid message received".
+- Em `/services`, o botão vermelho de cada janela derruba o serviço (para de consumir as filas) e o verde reativa. As mensagens ficam acumuladas no RabbitMQ e são processadas quando o serviço volta.
+- Cada serviço expõe `GET /status`, `GET /events`, `POST /stop` e `POST /start` nas portas 3001 (inventory), 3002 (payment), 3003 (invoice), 3004 (email) e 3005 (dispatch).
+
+Para rodar o frontend fora do Docker: `cd public/web-rabbitmq && npm install && npm run dev`.
+
 Cada serviço guarda o estado em memória: não escale um serviço da saga (`--scale`), senão compensações podem cair em outra réplica sem o estado.
 
 Mensagens cujo handler falha (ex.: payload inválido) são rejeitadas sem reentrega e seguem para a fila `dead-letter` via exchange `dlx`.
