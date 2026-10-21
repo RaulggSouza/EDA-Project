@@ -90,7 +90,11 @@ export class RastreamentoService implements OnModuleInit, OnModuleDestroy {
     return this.eventos.asObservable();
   }
 
-  novoAssinante(): Promise<EventoMqtt> {
+  novoAssinante(): Promise<{
+    topico: string;
+    payload: string;
+    retain: boolean;
+  }> {
     return new Promise((resolve, reject) => {
       const cliente = mqtt.connect(url, {
         clientId: `novo-assinante-${Date.now()}`,
@@ -109,13 +113,7 @@ export class RastreamentoService implements OnModuleInit, OnModuleDestroy {
         console.log(
           `[novo assinante] recebeu ${topico} com retain=${packet.retain}`,
         );
-        resolve({
-          quem: 'rastreamento',
-          topico,
-          payload: msg.toString(),
-          retain: packet.retain,
-          em: new Date().toISOString(),
-        });
+        resolve({ topico, payload: msg.toString(), retain: packet.retain });
       });
     });
   }
