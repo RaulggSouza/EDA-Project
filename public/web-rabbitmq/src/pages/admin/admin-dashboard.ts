@@ -8,7 +8,7 @@ import { createOrderLogWindow } from './order-log-window';
 export const adminDashboardPage: Page = {
   render(root) {
     if (!isAdminLoggedIn()) {
-      navigate('/admin');
+      navigate('/admin', true);
       return () => {};
     }
 

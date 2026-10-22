@@ -10,11 +10,15 @@ const SHORTCUT_ROUTES = [...ROUTES, ADMIN_ROUTE];
 
 let showCurrentRoute = () => {};
 
-export function navigate(path: string): void {
+export function navigate(path: string, replace = false): void {
   if (path === location.pathname) {
     return;
   }
-  history.pushState(null, '', path);
+  if (replace) {
+    history.replaceState(null, '', path);
+  } else {
+    history.pushState(null, '', path);
+  }
   showCurrentRoute();
 }
 

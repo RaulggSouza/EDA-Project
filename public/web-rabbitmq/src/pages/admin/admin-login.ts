@@ -9,7 +9,7 @@ const DASHBOARD_PATH = '/admin/dashboard';
 export const adminLoginPage: Page = {
   render(root) {
     if (isAdminLoggedIn()) {
-      navigate(DASHBOARD_PATH);
+      navigate(DASHBOARD_PATH, true);
       return () => {};
     }
 
