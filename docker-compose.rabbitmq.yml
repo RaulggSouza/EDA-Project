@@ -81,6 +81,16 @@ services:
       SERVICE: dispatch
       RABBITMQ_URL: amqp://rabbitmq:5672
 
+  discount:
+    <<: *saga-service
+    ports:
+      - "3006:3006"
+    environment:
+      PORT: 3006
+      MESSAGING_DRIVER: rabbitmq
+      SERVICE: discount
+      RABBITMQ_URL: amqp://rabbitmq:5672
+
   log:
     <<: *saga-service
     ports:

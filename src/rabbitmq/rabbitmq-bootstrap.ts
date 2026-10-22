@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { DiscountModule } from './services/discount/discount.module';
 import { DispatchModule } from './services/dispatch/dispatch.module';
 import { EmailModule } from './services/email/email.module';
 import { InventoryModule } from './services/inventory/inventory.module';
@@ -15,6 +16,7 @@ const SERVICE_MODULES = {
   email: EmailModule,
   dispatch: DispatchModule,
   log: LogModule,
+  discount: DiscountModule,
 };
 
 export async function bootstrapRabbitmq(): Promise<void> {
