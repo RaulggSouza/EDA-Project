@@ -25,7 +25,9 @@ const clients = Object.fromEntries(
   ]),
 ) as Record<ServiceName, AxiosInstance>;
 
-export async function fetchStatus(service: ServiceName): Promise<ServiceStatus> {
+export async function fetchStatus(
+  service: ServiceName,
+): Promise<ServiceStatus> {
   const { data } = await clients[service].get<StatusResponse>('/status');
   return data.status;
 }
@@ -40,7 +42,9 @@ export async function fetchEvents(
   return data;
 }
 
-export async function stopService(service: ServiceName): Promise<ServiceStatus> {
+export async function stopService(
+  service: ServiceName,
+): Promise<ServiceStatus> {
   const { data } = await clients[service].post<StatusResponse>('/stop');
   return data.status;
 }

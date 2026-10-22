@@ -9,6 +9,7 @@ export interface NewOrder {
   orderId: string;
   items: { sku: string; quantity: number }[];
   amount: number;
+  discounts?: string[];
   broken?: boolean;
 }
 

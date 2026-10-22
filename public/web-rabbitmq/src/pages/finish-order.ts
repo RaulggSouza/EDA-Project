@@ -1,22 +1,10 @@
+import { fetchProducts, type CatalogProduct } from '../api/discount-api';
 import type { OrderStatus } from '../api/orders-api';
 import type { Page } from '../router';
 import { orderTracker, type TrackedOrder } from '../state/order-tracker';
 import { el } from '../ui/dom';
 import { formatCurrency } from '../ui/format';
 import { createSafariFrame } from '../ui/safari-frame';
-
-interface Product {
-  sku: string;
-  name: string;
-  icon: string;
-  price: number;
-}
-
-const PRODUCTS: Product[] = [
-  { sku: 'bluetooth-headphones', name: 'Fone Bluetooth', icon: '🎧', price: 199 },
-  { sku: 'mechanical-keyboard', name: 'Teclado Mecânico', icon: '⌨️', price: 350 },
-  { sku: 'gaming-mouse', name: 'Mouse Gamer', icon: '🖱️', price: 120 },
-];
 
 const STATUS_COLORS: Record<OrderStatus, string> = {
   PENDING: 'text-neutral-500',
@@ -41,10 +29,17 @@ function stepButton(label: string, onClick: () => void): HTMLButtonElement {
 
 export const finishOrderPage: Page = {
   render(root) {
-    const quantities = new Map(PRODUCTS.map((product) => [product.sku, 1]));
+    let products: CatalogProduct[] = [];
+    let refreshers: (() => void)[] = [];
+    const quantities = new Map<string, number>();
     let sending = false;
+    let disposed = false;
 
-    const list = el('div');
+    const list = el(
+      'div',
+      'text-sm text-neutral-500',
+      'Carregando produtos...',
+    );
     const total = el('span', 'text-lg font-bold');
     const submit = el(
       'button',
@@ -58,12 +53,29 @@ export const finishOrderPage: Page = {
 
     const quantityOf = (sku: string) => quantities.get(sku) ?? 0;
     const totalAmount = () =>
-      PRODUCTS.reduce(
+      products.reduce(
         (sum, product) => sum + product.price * quantityOf(product.sku),
         0,
       );
 
-    const refreshers = PRODUCTS.map((product) => {
+    const renderPrice = (product: CatalogProduct) => {
+      const price = el('div', 'text-sm text-neutral-500');
+      if (product.discountApplied) {
+        price.append(
+          el('span', 'mr-2 line-through', formatCurrency(product.basePrice)),
+          el(
+            'span',
+            'font-semibold text-green-600',
+            formatCurrency(product.price),
+          ),
+        );
+      } else {
+        price.textContent = formatCurrency(product.price);
+      }
+      return price;
+    };
+
+    const renderRow = (product: CatalogProduct) => {
       const quantity = el('span', 'w-6 text-center tabular-nums');
       const change = (delta: number) => {
         quantities.set(
@@ -78,7 +90,7 @@ export const finishOrderPage: Page = {
       const info = el('div');
       info.append(
         el('div', 'font-medium', `${product.icon} ${product.name}`),
-        el('div', 'text-sm text-neutral-500', formatCurrency(product.price)),
+        renderPrice(product),
       );
       const controls = el('div', 'flex items-center gap-2');
       controls.append(minus, quantity, plus);
@@ -93,7 +105,7 @@ export const finishOrderPage: Page = {
         quantity.textContent = String(quantityOf(product.sku));
         minus.disabled = quantityOf(product.sku) === 0;
       };
-    });
+    };
 
     const refresh = () => {
       refreshers.forEach((update) => update());
@@ -102,21 +114,42 @@ export const finishOrderPage: Page = {
       submit.disabled = amount === 0 || sending;
     };
 
+    const loadCatalog = async () => {
+      try {
+        products = await fetchProducts();
+      } catch {
+        if (!disposed) {
+          list.textContent = 'Catálogo indisponível';
+          list.className = 'text-sm text-red-600';
+        }
+        return;
+      }
+      if (disposed) {
+        return;
+      }
+      list.replaceChildren();
+      list.className = '';
+      products.forEach((product) => quantities.set(product.sku, 1));
+      refreshers = products.map(renderRow);
+      refresh();
+    };
+
     submit.addEventListener('click', async () => {
-      const items = PRODUCTS.filter(
-        (product) => quantityOf(product.sku) > 0,
-      ).map((product) => ({
-        sku: product.sku,
-        quantity: quantityOf(product.sku),
-      }));
+      const chosen = products.filter((product) => quantityOf(product.sku) > 0);
       sending = true;
       feedback.textContent = '';
       refresh();
       try {
         await orderTracker.submit({
           orderId: generateOrderId(),
-          items,
+          items: chosen.map((product) => ({
+            sku: product.sku,
+            quantity: quantityOf(product.sku),
+          })),
           amount: totalAmount(),
+          discounts: chosen
+            .filter((product) => product.discountApplied)
+            .map((product) => product.sku),
           broken: broken.checked,
         });
       } catch {
@@ -134,7 +167,11 @@ export const finishOrderPage: Page = {
       }
       status.replaceChildren(
         `Pedido #${order.orderId} · `,
-        el('span', `font-semibold ${STATUS_COLORS[order.status]}`, order.status),
+        el(
+          'span',
+          `font-semibold ${STATUS_COLORS[order.status]}`,
+          order.status,
+        ),
       );
     };
 
@@ -165,7 +202,12 @@ export const finishOrderPage: Page = {
     root.append(wrapper);
 
     refresh();
+    void loadCatalog();
     showOrder(orderTracker.current);
-    return orderTracker.subscribe(showOrder);
+    const unsubscribe = orderTracker.subscribe(showOrder);
+    return () => {
+      disposed = true;
+      unsubscribe();
+    };
   },
 };
