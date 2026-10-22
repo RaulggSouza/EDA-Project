@@ -1,15 +1,11 @@
 export type ServiceName =
-  | 'inventory'
-  | 'payment'
-  | 'invoice'
-  | 'email'
-  | 'dispatch'
-  | 'discount';
+  'inventory' | 'payment' | 'invoice' | 'email' | 'dispatch' | 'discount';
 
 const env = import.meta.env;
 
-export const ORDER_URL: string =
-  env.VITE_ORDER_URL ?? 'http://localhost:3000';
+export const ORDER_URL: string = env.VITE_ORDER_URL ?? 'http://localhost:3000';
+
+export const ADMIN_PASSWORD: string = env.VITE_ADMIN_PASSWORD ?? 'admin';
 
 export const SERVICE_URLS: Record<ServiceName, string> = {
   inventory: env.VITE_INVENTORY_URL ?? 'http://localhost:3001',

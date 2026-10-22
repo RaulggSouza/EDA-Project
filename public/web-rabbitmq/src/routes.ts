@@ -10,3 +10,10 @@ export const ROUTES: RouteInfo[] = [
   { path: '/services', code: 'Digit2', key: 'Alt+2', label: 'Serviços' },
   { path: '/email', code: 'Digit3', key: 'Alt+3', label: 'E-mail' },
 ];
+
+export const ADMIN_ROUTE: RouteInfo = {
+  path: '/admin',
+  code: 'Digit0',
+  key: 'Alt+0',
+  label: 'Admin',
+};

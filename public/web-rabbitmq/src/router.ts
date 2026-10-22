@@ -1,4 +1,4 @@
-import { ROUTES } from './routes';
+import { ADMIN_ROUTE, ROUTES } from './routes';
 import { createShortcutHint } from './ui/shortcut-hint';
 
 export interface Page {
@@ -6,6 +6,17 @@ export interface Page {
 }
 
 const DEFAULT_ROUTE = ROUTES[0].path;
+const SHORTCUT_ROUTES = [...ROUTES, ADMIN_ROUTE];
+
+let showCurrentRoute = () => {};
+
+export function navigate(path: string): void {
+  if (path === location.pathname) {
+    return;
+  }
+  history.pushState(null, '', path);
+  showCurrentRoute();
+}
 
 export function startRouter(
   root: HTMLElement,
@@ -13,28 +24,29 @@ export function startRouter(
 ): void {
   let cleanup = () => {};
 
-  const show = () => {
+  showCurrentRoute = () => {
     if (!Object.hasOwn(pages, location.pathname)) {
       history.replaceState(null, '', DEFAULT_ROUTE);
     }
     cleanup();
+    cleanup = () => {};
     root.replaceChildren();
-    cleanup = pages[location.pathname].render(root);
-    root.append(createShortcutHint(location.pathname));
-  };
-
-  const navigate = (path: string) => {
-    if (path === location.pathname) {
+    const path = location.pathname;
+    const pageCleanup = pages[path].render(root);
+    if (location.pathname !== path) {
+      pageCleanup();
       return;
     }
-    history.pushState(null, '', path);
-    show();
+    cleanup = pageCleanup;
+    if (ROUTES.some(({ path }) => path === location.pathname)) {
+      root.append(createShortcutHint(location.pathname));
+    }
   };
 
-  window.addEventListener('popstate', show);
+  window.addEventListener('popstate', showCurrentRoute);
   window.addEventListener('keydown', (event) => {
     const route = event.altKey
-      ? ROUTES.find(({ code }) => code === event.code)
+      ? SHORTCUT_ROUTES.find(({ code }) => code === event.code)
       : undefined;
     if (route) {
       event.preventDefault();
@@ -42,5 +54,5 @@ export function startRouter(
     }
   });
 
-  show();
+  showCurrentRoute();
 }

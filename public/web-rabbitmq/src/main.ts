@@ -1,4 +1,5 @@
 import './style.css';
+import { adminLoginPage } from './pages/admin/admin-login';
 import { emailPage } from './pages/email';
 import { finishOrderPage } from './pages/finish-order';
 import { servicesPage } from './pages/services';
@@ -16,4 +17,5 @@ startRouter(root, {
   '/finish-order': finishOrderPage,
   '/services': servicesPage,
   '/email': emailPage,
+  '/admin': adminLoginPage,
 });
