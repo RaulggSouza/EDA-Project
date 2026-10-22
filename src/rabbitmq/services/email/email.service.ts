@@ -1,7 +1,7 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import type { AmqpMessageConsumer } from '../../../messaging/interfaces/amqp-message-consumer.interface';
 import { ServiceActivity } from '../../control/service-activity';
-import { OrderPayload } from '../../events/saga-events';
+import { DiscountAppliedPayload, OrderPayload } from '../../events/saga-events';
 import { AMQP_CONSUMER } from '../../rabbitmq.constants';
 import { Queues } from '../../topology';
 
@@ -48,5 +48,17 @@ export class EmailService implements OnModuleInit {
         { subject: 'Invalid message received' },
       );
     });
+
+    await this.consumer.consume(
+      Queues.EMAIL_DISCOUNT_APPLIED,
+      async (message) => {
+        const discount = JSON.parse(message.payload) as DiscountAppliedPayload;
+        this.activity.record(
+          'discount',
+          `${discount.percent}% discount applied to ${discount.sku}, new price ${discount.price}`,
+          { subject: `Desconto aplicado em ${discount.name}` },
+        );
+      },
+    );
   }
 }
