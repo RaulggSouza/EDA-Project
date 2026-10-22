@@ -51,6 +51,13 @@ export class OrdersController {
     if (typeof body.amount !== 'number' || body.amount <= 0) {
       throw new BadRequestException('amount must be a positive number');
     }
+    if (
+      body.discounts !== undefined &&
+      (!Array.isArray(body.discounts) ||
+        body.discounts.some((sku) => typeof sku !== 'string'))
+    ) {
+      throw new BadRequestException('discounts must be an array of strings');
+    }
     if (body.simulate && !SIMULATED_FAILURES.includes(body.simulate)) {
       throw new BadRequestException(
         `simulate must be one of: ${SIMULATED_FAILURES.join(', ')}`,

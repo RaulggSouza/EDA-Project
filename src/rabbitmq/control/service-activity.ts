@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-const MAX_EVENTS = 100;
+const MAX_EVENTS = 500;
 
 export interface ActivityEvent {
   id: number;

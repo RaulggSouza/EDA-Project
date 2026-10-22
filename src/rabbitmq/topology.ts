@@ -3,6 +3,7 @@ export const Exchanges = {
   INVENTORY: 'inventory.events',
   PAYMENT: 'payment.events',
   INVOICE: 'invoice.events',
+  DISCOUNT: 'discount.events',
   DLX: 'dlx',
 } as const;
 
@@ -14,6 +15,7 @@ export const RoutingKeys = {
   PAYMENT_DECLINED: 'payment.declined',
   INVOICE_ISSUED: 'invoice.issued',
   INVOICE_FAILED: 'invoice.failed',
+  DISCOUNT_APPLIED: 'discount.applied',
   DEAD_LETTER: 'dead-letter',
 } as const;
 
@@ -28,6 +30,12 @@ export const Queues = {
   EMAIL_ORDER_FAILED: 'email-service.order-failed',
   DISPATCH_INVOICE_ISSUED: 'dispatch-service.invoice-issued',
   ORDER_STATUS: 'order-service.order-status',
+  DISCOUNT_INVOICE_ISSUED: 'discount-service.invoice-issued',
+  EMAIL_DISCOUNT_APPLIED: 'email-service.discount-applied',
+  LOG_ORDER_CREATED: 'log-service.order-created',
+  LOG_INVOICE_ISSUED: 'log-service.invoice-issued',
+  LOG_ORDER_FAILED: 'log-service.order-failed',
+  LOG_DEAD_LETTER: 'log-service.dead-letter',
   DEAD_LETTER: 'dead-letter',
 } as const;
 
@@ -114,6 +122,50 @@ export const QUEUE_BINDINGS: QueueDefinition[] = [
       { exchange: Exchanges.PAYMENT, routingKey: RoutingKeys.PAYMENT_DECLINED },
       { exchange: Exchanges.INVOICE, routingKey: RoutingKeys.INVOICE_FAILED },
       { exchange: Exchanges.INVOICE, routingKey: RoutingKeys.INVOICE_ISSUED },
+    ],
+  },
+  {
+    queue: Queues.DISCOUNT_INVOICE_ISSUED,
+    bindings: [
+      { exchange: Exchanges.INVOICE, routingKey: RoutingKeys.INVOICE_ISSUED },
+    ],
+  },
+  {
+    queue: Queues.EMAIL_DISCOUNT_APPLIED,
+    bindings: [
+      {
+        exchange: Exchanges.DISCOUNT,
+        routingKey: RoutingKeys.DISCOUNT_APPLIED,
+      },
+    ],
+  },
+  {
+    queue: Queues.LOG_ORDER_CREATED,
+    bindings: [
+      { exchange: Exchanges.ORDER, routingKey: RoutingKeys.ORDER_CREATED },
+    ],
+  },
+  {
+    queue: Queues.LOG_INVOICE_ISSUED,
+    bindings: [
+      { exchange: Exchanges.INVOICE, routingKey: RoutingKeys.INVOICE_ISSUED },
+    ],
+  },
+  {
+    queue: Queues.LOG_ORDER_FAILED,
+    bindings: [
+      {
+        exchange: Exchanges.INVENTORY,
+        routingKey: RoutingKeys.INVENTORY_OUT_OF_STOCK,
+      },
+      { exchange: Exchanges.PAYMENT, routingKey: RoutingKeys.PAYMENT_DECLINED },
+      { exchange: Exchanges.INVOICE, routingKey: RoutingKeys.INVOICE_FAILED },
+    ],
+  },
+  {
+    queue: Queues.LOG_DEAD_LETTER,
+    bindings: [
+      { exchange: Exchanges.DLX, routingKey: RoutingKeys.DEAD_LETTER },
     ],
   },
 ];

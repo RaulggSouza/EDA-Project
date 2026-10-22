@@ -28,6 +28,7 @@ export class RabbitmqTopologyManager implements AmqpTopologyManager {
       Exchanges.INVENTORY,
       Exchanges.PAYMENT,
       Exchanges.INVOICE,
+      Exchanges.DISCOUNT,
     ]) {
       await channel.assertExchange(exchange, 'topic', { durable: true });
     }
