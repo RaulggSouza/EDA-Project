@@ -81,6 +81,16 @@ services:
       SERVICE: dispatch
       RABBITMQ_URL: amqp://rabbitmq:5672
 
+  log:
+    <<: *saga-service
+    ports:
+      - "3007:3007"
+    environment:
+      PORT: 3007
+      MESSAGING_DRIVER: rabbitmq
+      SERVICE: log
+      RABBITMQ_URL: amqp://rabbitmq:5672
+
   web:
     image: node:22-alpine
     working_dir: /app

@@ -3,6 +3,7 @@ import { DispatchModule } from './services/dispatch/dispatch.module';
 import { EmailModule } from './services/email/email.module';
 import { InventoryModule } from './services/inventory/inventory.module';
 import { InvoiceModule } from './services/invoice/invoice.module';
+import { LogModule } from './services/log/log.module';
 import { OrderModule } from './services/order/order.module';
 import { PaymentModule } from './services/payment/payment.module';
 
@@ -13,6 +14,7 @@ const SERVICE_MODULES = {
   invoice: InvoiceModule,
   email: EmailModule,
   dispatch: DispatchModule,
+  log: LogModule,
 };
 
 export async function bootstrapRabbitmq(): Promise<void> {
