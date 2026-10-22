@@ -128,7 +128,7 @@ export const finishOrderPage: Page = {
     });
 
     const showOrder = (order: TrackedOrder | null) => {
-      if (!order) {
+      if (!order || order.broken) {
         status.replaceChildren();
         return;
       }

@@ -11,6 +11,7 @@ const GIVE_UP_AFTER_MS = 30000;
 export interface TrackedOrder {
   orderId: string;
   status: OrderStatus;
+  broken: boolean;
 }
 
 type Listener = (order: TrackedOrder | null) => void;
@@ -33,12 +34,15 @@ export class OrderTracker {
 
   async submit(order: NewOrder): Promise<void> {
     await createOrder(order);
-    this.watch(order.orderId);
+    this.watch(order.orderId, order.broken === true);
   }
 
-  private watch(orderId: string): void {
+  private watch(orderId: string, broken: boolean): void {
     window.clearTimeout(this.timer);
-    this.update({ orderId, status: 'PENDING' });
+    this.update({ orderId, status: 'PENDING', broken });
+    if (broken) {
+      return;
+    }
     const deadline = Date.now() + GIVE_UP_AFTER_MS;
 
     const poll = async () => {
@@ -47,7 +51,7 @@ export class OrderTracker {
       if (this.order?.orderId !== orderId) {
         return;
       }
-      this.update({ orderId, status });
+      this.update({ orderId, status, broken });
       if (status === 'PENDING' && Date.now() < deadline) {
         this.timer = window.setTimeout(poll, POLL_INTERVAL_MS);
       }
