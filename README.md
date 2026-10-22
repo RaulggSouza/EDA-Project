@@ -254,7 +254,7 @@ docker compose down
 Fluxo independente do Kafka: Order → Inventory → Payment → Invoice → Email/Dispatch, com compensações. Cada serviço roda em um container próprio (`SERVICE`), usando `MESSAGING_DRIVER=rabbitmq`.
 
 ```bash
-# Subir broker + 6 serviços
+# Subir broker + 8 serviços (inclui discount e log)
 docker compose -f docker-compose.rabbitmq.yml up -d --build
 
 # Management UI: http://localhost:15672 (guest / guest)
@@ -287,10 +287,20 @@ docker compose -f docker-compose.rabbitmq.yml up -d --build
 # Abrir http://localhost:5173
 ```
 
-- Atalhos: `Alt+1` loja (`/finish-order`), `Alt+2` serviços (`/services`), `Alt+3` e-mail (`/email`).
+- Atalhos: `Alt+1` loja (`/finish-order`), `Alt+2` serviços (`/services`), `Alt+3` e-mail (`/email`). `Alt+0` abre a área de administração (`/admin`), que não aparece na barra de atalhos.
 - Na loja, o checkbox "Quebrar pedido" envia uma mensagem inválida, que vai para a `dead-letter` e aparece no e-mail como "Invalid message received".
 - Em `/services`, o botão vermelho de cada janela derruba o serviço (para de consumir as filas) e o verde reativa. As mensagens ficam acumuladas no RabbitMQ e são processadas quando o serviço volta.
-- Cada serviço expõe `GET /status`, `GET /events`, `POST /stop` e `POST /start` nas portas 3001 (inventory), 3002 (payment), 3003 (invoice), 3004 (email) e 3005 (dispatch).
+- Cada serviço expõe `GET /status`, `GET /events`, `POST /stop` e `POST /start` nas portas 3001 (inventory), 3002 (payment), 3003 (invoice), 3004 (email), 3005 (dispatch), 3006 (discount) e 3007 (log).
+- Em `/email`, o filtro separa "Pedidos confirmados" (nota fiscal emitida) de "Pedidos inválidos" (pedidos cancelados e mensagens quebradas). "Todos" também mostra os e-mails de desconto aplicado.
+- Em `/finish-order`, um pedido enviado com "Quebrar pedido" não exibe status, pois nunca sai de `PENDING`.
+
+### Administração e descontos
+
+- `Alt+0` abre `/admin`, que pede a senha (padrão `admin`, configurável por `VITE_ADMIN_PASSWORD`). Após o primeiro login o acesso fica salvo no navegador e `/admin` vai direto para `/admin/dashboard`.
+- O dashboard tem duas janelas: o log de pedidos (serviço `log`, consome `order.created`, `invoice.issued`, as falhas e a `dead-letter`) e as sugestões de desconto.
+- O serviço `discount` é dono do catálogo e dos preços (`GET /products`). Quando o total gasto em um produto passa de R$ 500, sugere 10% de desconto (`GET /suggestions`).
+- Demo: confirme pedidos até passar de R$ 500 em um produto, aplique o desconto no dashboard (o botão fica desativado e um e-mail de desconto chega em `/email`), faça um novo pedido com o produto em `/finish-order` (preço riscado com o valor com desconto) e, quando o pedido for confirmado, o desconto é desativado e o preço volta ao normal.
+- O estado do `log` e do `discount` fica em memória e é perdido ao reiniciar o serviço.
 
 Para rodar o frontend fora do Docker: `cd public/web-rabbitmq && npm install && npm run dev`.
 
