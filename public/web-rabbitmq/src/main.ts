@@ -1,4 +1,5 @@
 import './style.css';
+import { adminDashboardPage } from './pages/admin/admin-dashboard';
 import { adminLoginPage } from './pages/admin/admin-login';
 import { emailPage } from './pages/email';
 import { finishOrderPage } from './pages/finish-order';
@@ -18,4 +19,5 @@ startRouter(root, {
   '/services': servicesPage,
   '/email': emailPage,
   '/admin': adminLoginPage,
+  '/admin/dashboard': adminDashboardPage,
 });

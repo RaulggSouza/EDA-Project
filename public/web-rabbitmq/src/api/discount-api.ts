@@ -21,3 +21,24 @@ export async function fetchProducts(): Promise<CatalogProduct[]> {
   const { data } = await client.get<CatalogProduct[]>('/products');
   return data;
 }
+
+export interface Suggestion {
+  sku: string;
+  name: string;
+  icon: string;
+  spent: number;
+  percent: number;
+  currentPrice: number;
+  discountedPrice: number;
+  status: 'AVAILABLE' | 'APPLIED';
+}
+
+export async function fetchSuggestions(): Promise<Suggestion[]> {
+  const { data } = await client.get<Suggestion[]>('/suggestions');
+  return data;
+}
+
+export async function applySuggestion(sku: string): Promise<Suggestion> {
+  const { data } = await client.post<Suggestion>(`/suggestions/${sku}/apply`);
+  return data;
+}

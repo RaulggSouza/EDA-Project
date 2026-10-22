@@ -1,5 +1,11 @@
 export type ServiceName =
-  'inventory' | 'payment' | 'invoice' | 'email' | 'dispatch' | 'discount';
+  | 'inventory'
+  | 'payment'
+  | 'invoice'
+  | 'email'
+  | 'dispatch'
+  | 'discount'
+  | 'log';
 
 const env = import.meta.env;
 
@@ -14,6 +20,7 @@ export const SERVICE_URLS: Record<ServiceName, string> = {
   email: env.VITE_EMAIL_URL ?? 'http://localhost:3004',
   dispatch: env.VITE_DISPATCH_URL ?? 'http://localhost:3005',
   discount: env.VITE_DISCOUNT_URL ?? 'http://localhost:3006',
+  log: env.VITE_LOG_URL ?? 'http://localhost:3007',
 };
 
 export const SERVICE_NAMES = Object.keys(SERVICE_URLS) as ServiceName[];
