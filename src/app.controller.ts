@@ -3,7 +3,7 @@ import {
   NotFoundException, Param, Post, Sse,
 } from '@nestjs/common';
 import { map, Observable } from 'rxjs';
-import { KafkaConsumerAdapter } from './kafka/kafka-consumer.adapter';
+import { KafkaDemoConsumerManager } from './kafka/functions/kafka-demo-consumer.manager';
 import { KafkaConsumerGroup } from './kafka/types/kafka-consumer-group.enum';
 import { OrdersService } from './orders/orders-service';
 
@@ -11,7 +11,7 @@ import { OrdersService } from './orders/orders-service';
 export class AppController {
   constructor(
     private readonly orderService: OrdersService,
-    private readonly consumers: KafkaConsumerAdapter,
+    private readonly consumers: KafkaDemoConsumerManager,
   ) {}
 
   @Post('/orders')
@@ -29,7 +29,7 @@ export class AppController {
       throw new BadRequestException('Escolha o grupo orders ou stock.');
     }
     try {
-      return await this.consumers.createDemoConsumer(body.groupId as KafkaConsumerGroup, body.name);
+      return await this.consumers.createConsumer(body.groupId as KafkaConsumerGroup, body.name);
     } catch (error) {
       throw new BadRequestException(error instanceof Error ? error.message : 'Não foi possível criar o consumer.');
     }
@@ -38,7 +38,7 @@ export class AppController {
   @Delete('/demo/consumers/:id')
   async removeConsumer(@Param('id') id: string) {
     try {
-      await this.consumers.removeDemoConsumer(id);
+      await this.consumers.removeConsumer(id);
       return { status: 'Consumer encerrado.', id };
     } catch (error) {
       throw new NotFoundException(error instanceof Error ? error.message : 'Consumer não encontrado.');
@@ -47,7 +47,7 @@ export class AppController {
 
   @Get('/demo/state')
   getDemoState() {
-    return this.consumers.getDemoState();
+    return this.consumers.getState();
   }
 
   @Sse('/demo/events')
